@@ -61,7 +61,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Created by:\n\nKiller Spiders\n\nOur name is random...\n\nbut our code is not..."
+        android:text="Team:\n\nKiller Spiders\n\nOur name is random...\n\nbut our code is not..."
         android:singleLine="false"
         android:gravity="center_vertical"
         android:id="@+id/textViewAuthor"

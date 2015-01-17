@@ -3,16 +3,22 @@ package com.joshstrohminger.stepbystep;
 import android.app.Fragment;
 
 public class FragmentMap {
-    private String fragmentTitle;
+    private boolean useNameAsTitle;
+    private String fragmentName;
     private Class<? extends Fragment> fragmentClass;
-    public FragmentMap(String fragmentTitle, Class<? extends Fragment> fragmentClass) {
-        this.fragmentTitle = fragmentTitle;
-        this.fragmentClass = fragmentClass;
+    public FragmentMap(String fragmentName, Class<? extends Fragment> fragmentClass) {
+        this(fragmentName, fragmentClass, true);
     }
-    public String getFragmentTitle() {
-        return fragmentTitle;
+    public FragmentMap(String fragmentName, Class<? extends Fragment> fragmentClass, boolean useNameAsTitle) {
+        this.fragmentName = fragmentName;
+        this.fragmentClass = fragmentClass;
+        this.useNameAsTitle = useNameAsTitle;
+    }
+    public String getFragmentName() {
+        return fragmentName;
     }
     public Class<? extends Fragment> getFragmentClass() {
         return fragmentClass;
     }
+    public boolean shouldUseNameAsTitle() { return useNameAsTitle; }
 }

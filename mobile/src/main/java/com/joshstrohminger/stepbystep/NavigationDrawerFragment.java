@@ -1,26 +1,24 @@
 package com.joshstrohminger.stepbystep;
 
 
-import android.app.Activity;
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 /**
  * Fragment used for managing interactions for and presentation of a navigation drawer.
@@ -32,7 +30,7 @@ public class NavigationDrawerFragment extends Fragment {
     public static final String ARG_SECTION_NUMBER = "arg_section_number";
 
     static final FragmentMap[] SECTIONS = {
-            new FragmentMap("Home", HomeFragment.class),
+            new FragmentMap("Home", HomeFragment.class, false),
             new FragmentMap("My Steps", PlaceholderFragment.class),
             new FragmentMap("Get Steps", PlaceholderFragment.class),
             new FragmentMap("Settings", PlaceholderFragment.class)
@@ -108,7 +106,7 @@ public class NavigationDrawerFragment extends Fragment {
         });
         String[] names = new String[SECTIONS.length];
         for( int i = 0; i < SECTIONS.length; i++) {
-            names[i] = SECTIONS[i].getFragmentTitle();
+            names[i] = SECTIONS[i].getFragmentName();
         }
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),

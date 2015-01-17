@@ -105,7 +105,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     public void onSectionAttached(int number) {
-        mTitle = NavigationDrawerFragment.SECTIONS[number].getFragmentTitle();
+        FragmentMap map = NavigationDrawerFragment.SECTIONS[number];
+        mTitle = map.shouldUseNameAsTitle() ? map.getFragmentName() : getTitle();
     }
 
     public void restoreActionBar() {
