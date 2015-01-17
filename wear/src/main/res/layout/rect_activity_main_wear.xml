@@ -12,7 +12,8 @@
         android:id="@+id/dataItem_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:transcriptMode="alwaysScroll"/>
+        android:transcriptMode="alwaysScroll"
+        android:layout_margin="5dp"/>
 
     <TextView
         android:id="@+id/intro"

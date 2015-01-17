@@ -2,9 +2,6 @@ package com.joshstrohminger.stepbystep;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.wearable.view.WatchViewStub;
@@ -19,18 +16,15 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.data.FreezableUtils;
-import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
-import java.io.InputStream;
 import java.util.List;
 
 public class MainWearActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
@@ -138,25 +132,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 generateEvent("Unknown data event type", "Type = " + event.getType());
             }
         }
-    }
-
-    /**
-     * Extracts {@link android.graphics.Bitmap} data from the
-     * {@link com.google.android.gms.wearable.Asset}
-     */
-    private Bitmap loadBitmapFromAsset(GoogleApiClient apiClient, Asset asset) {
-        if (asset == null) {
-            throw new IllegalArgumentException("Asset must be non-null");
-        }
-
-        InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
-                apiClient, asset).await().getInputStream();
-
-        if (assetInputStream == null) {
-            Log.w(TAG, "Requested an unknown Asset.");
-            return null;
-        }
-        return BitmapFactory.decodeStream(assetInputStream);
     }
 
     @Override

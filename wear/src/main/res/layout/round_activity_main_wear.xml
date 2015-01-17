@@ -5,14 +5,40 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/layout"
+    android:padding="5dp"
     tools:context=".MainWearActivity"
     tools:deviceIds="wear_round">
 
-    <ListView
-        android:id="@+id/dataItem_list"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:transcriptMode="alwaysScroll"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/contentPanel"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Title"
+            android:gravity="center"
+            android:id="@+id/textViewTitle"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Subtitle"
+            android:gravity="center"
+            android:id="@+id/textViewSubtitle"/>
+
+        <ListView
+            android:id="@+id/dataItem_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:listitem="@android:layout/simple_list_item_single_choice"
+            android:choiceMode="singleChoice"/>
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/intro"
@@ -20,7 +46,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:textSize="20sp"
-        android:layout_margin="16dp"
+        android:layout_margin="10dp"
         android:gravity="center"
         android:fontFamily="sans-serif-condensed-light"
         android:text="Waiting for data to arrive..." />
