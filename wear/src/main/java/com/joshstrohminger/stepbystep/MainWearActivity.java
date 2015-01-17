@@ -2,6 +2,8 @@ package com.joshstrohminger.stepbystep;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.wearable.view.WatchViewStub;
@@ -16,15 +18,18 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.data.FreezableUtils;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class MainWearActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
@@ -34,10 +39,14 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private static final String TAG = MainWearActivity.class.getSimpleName();
 
     private GoogleApiClient mGoogleApiClient;
-    private ListView mDataItemList;
+    private ListView listView;
     private TextView mIntroText;
-    private DataItemAdapter mDataItemListAdapter;
-    private View mLayout;
+    private TextView titleTextView;
+    private TextView subtitleTextView;
+    private String title;
+    private String subtitle;
+    private String[] instructions;
+    private View contentPanel;
     private Handler mHandler;
 
     @Override
@@ -50,13 +59,11 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
-                mDataItemList = (ListView) stub.findViewById(R.id.dataItem_list);
+                listView = (ListView) stub.findViewById(R.id.dataItem_list);
                 mIntroText = (TextView) stub.findViewById(R.id.intro);
-                mLayout = stub.findViewById(R.id.layout);
-
-                // Stores data events received by the local broadcaster.
-                mDataItemListAdapter = new DataItemAdapter(MainWearActivity.this, android.R.layout.simple_list_item_1);
-                mDataItemList.setAdapter(mDataItemListAdapter);
+                contentPanel = stub.findViewById(R.id.contentPanel);
+                titleTextView = (TextView) stub.findViewById(R.id.textViewTitle);
+                subtitleTextView = (TextView) stub.findViewById(R.id.textViewSubtitle);
             }
         });
 
@@ -105,7 +112,8 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
             @Override
             public void run() {
                 mIntroText.setVisibility(View.INVISIBLE);
-                mDataItemListAdapter.add(new Event(title, text));
+                contentPanel.setVisibility(View.VISIBLE);
+                //mDataItemListAdapter.add(new Event(title, text));
             }
         });
     }
@@ -119,7 +127,25 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         for (DataEvent event : events) {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 String path = event.getDataItem().getUri().getPath();
-                if (DataLayerListenerService.COUNT_PATH.equals(path)) {
+                if (DataLayerListenerService.STEPS_PATH.equals(path)) {
+                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
+                    final String[] steps = dataMapItem.getDataMap().getStringArray(DataLayerListenerService.STEPS_KEY);
+                    if(steps.length >= 3) {
+                        title = steps[0];
+                        subtitle = steps[1];
+                        instructions = Arrays.copyOfRange(steps, 2, steps.length);
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d(TAG, "Populating wear steps...");
+                                titleTextView.setText(title);
+                                subtitleTextView.setText(subtitle);
+                                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainWearActivity.this, android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
+                                listView.setAdapter(adapter);
+                            }
+                        });
+                    }
+                } else if (DataLayerListenerService.COUNT_PATH.equals(path)) {
                     Log.d(TAG, "Data Changed for COUNT_PATH");
                     generateEvent("DataItem Changed", event.getDataItem().toString());
                 } else {

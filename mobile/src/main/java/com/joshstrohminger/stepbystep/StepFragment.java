@@ -45,6 +45,7 @@ public class StepFragment extends Fragment {
                 title = steps[0];
                 subtitle = steps[1];
                 instructions = Arrays.copyOfRange(steps, 2, steps.length);
+                ((MainMobileActivity)getActivity()).sendStepsToWearable(steps);
             }
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);

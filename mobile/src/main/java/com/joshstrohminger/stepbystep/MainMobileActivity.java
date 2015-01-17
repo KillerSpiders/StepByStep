@@ -29,6 +29,7 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,6 +47,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private static final int REQUEST_RESOLVE_ERROR = 1000;
 
     private static final String START_ACTIVITY_PATH = "/start-activity";
+    private static final String STEPS_PATH = "/steps";
+    private static final String STEPS_KEY = "steps";
     private static final String COUNT_PATH = "/count";
     private static final String COUNT_KEY = "count";
 
@@ -330,6 +333,25 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         }
 
         return results;
+    }
+
+    protected void sendStepsToWearable(String[] steps) {
+        PutDataMapRequest dataMap = PutDataMapRequest.create(STEPS_PATH);
+        dataMap.getDataMap().putStringArray(STEPS_KEY, steps);
+        dataMap.getDataMap().putLong("time", new Date().getTime());
+        PutDataRequest request = dataMap.asPutDataRequest();
+        Wearable.DataApi.putDataItem(mGoogleApiClient, request)
+                .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                    @Override
+                    public void onResult(DataApi.DataItemResult dataItemResult) {
+                        if(dataItemResult.getStatus().isSuccess()) {
+                            Log.d(TAG, "Sending steps succeeded");
+                        } else {
+                            Log.e(TAG, "Sending steps failed");
+                        }
+                    }
+                });
+
     }
 
     private void sendStartActivityMessage(String node) {
