@@ -2,31 +2,35 @@ package com.joshstrohminger.stepbystep;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.ContactsContract;
 import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.data.FreezableUtils;
-import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.util.Arrays;
@@ -48,6 +52,19 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private String[] instructions;
     private View contentPanel;
     private Handler mHandler;
+
+    private Uri stepsUri;
+    private Uri posUri;
+
+    private void setAppEnabled(final boolean enable) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mIntroText.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
+                contentPanel.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+            }
+        });
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,27 +112,121 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String nodeId = getRemoteNodeId();
+                if(nodeId != null) {
+                    setAppEnabled(true);
+                    stepsUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.STEPS_PATH).build();
+                    posUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.POS_PATH).build();
+                    getCurrentSteps();
+                }
+            }
+        }).start();
+    }
+
+    private String getLocalNodeId() {
+        NodeApi.GetLocalNodeResult nodeResult = Wearable.NodeApi.getLocalNode(mGoogleApiClient).await();
+        return nodeResult.getNode().getId();
+    }
+
+    private String getRemoteNodeId() {
+        NodeApi.GetConnectedNodesResult nodesResult = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+        List<Node> nodes = nodesResult.getNodes();
+        if (nodes.size() > 0) {
+            return nodes.get(0).getId();
+        }
+        return null;
     }
 
     @Override
     public void onConnectionSuspended(int cause) {
         Log.d(TAG, "onConnectionSuspended(): Connection to Google API client was suspended");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mIntroText.setVisibility(View.VISIBLE);
+                contentPanel.setVisibility(View.INVISIBLE);
+            }
+        });
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
         Log.e(TAG, "onConnectionFailed(): Failed to connect, with result: " + result);
+        setAppEnabled(false);
     }
 
-    private void generateEvent(final String title, final String text) {
-        runOnUiThread(new Runnable() {
+    private void getCurrentSteps() {
+        Wearable.DataApi.getDataItem(mGoogleApiClient, stepsUri).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
             @Override
-            public void run() {
-                mIntroText.setVisibility(View.INVISIBLE);
-                contentPanel.setVisibility(View.VISIBLE);
-                //mDataItemListAdapter.add(new Event(title, text));
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                DataItem dataItem = dataItemResult.getDataItem();
+                if(dataItem != null) {
+                    populateSteps(DataMapItem.fromDataItem(dataItem));
+                    getCurrentPos();
+                } else {
+                    Toast.makeText(MainWearActivity.this, "no steps", Toast.LENGTH_SHORT).show();
+                }
             }
         });
+    }
+
+    private void getCurrentPos() {
+        Wearable.DataApi.getDataItem(mGoogleApiClient, posUri).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+            @Override
+            public void onResult(DataApi.DataItemResult dataItemResult) {
+                DataItem dataItem = dataItemResult.getDataItem();
+                if(dataItem != null) {
+                    populateStepPosition(DataMapItem.fromDataItem(dataItem));
+                } else {
+                    Toast.makeText(MainWearActivity.this, "no pos", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void populateSteps(DataMapItem dataMapItem) {
+        final String[] steps = dataMapItem.getDataMap().getStringArray(DataLayerListenerService.STEPS_KEY);
+        if(steps.length >= 3) {
+            title = steps[0];
+            subtitle = steps[1];
+            instructions = Arrays.copyOfRange(steps, 2, steps.length);
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "Populating wear steps...");
+                    titleTextView.setText(title);
+                    subtitleTextView.setText(subtitle);
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(MainWearActivity.this, android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
+                    listView.setAdapter(adapter);
+                }
+            });
+        }
+    }
+
+    private void populateStepPosition(DataMapItem dataMapItem) {
+        final int pos = dataMapItem.getDataMap().getInt(DataLayerListenerService.POS_KEY);
+        if(instructions != null) {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(TAG, "Setting pos to " + pos);
+                    if(pos < 0 || pos >= instructions.length) {
+                        // uncheck
+                        int oldPos = listView.getCheckedItemPosition();
+                        if(oldPos != AdapterView.INVALID_POSITION) {
+                            listView.setItemChecked(oldPos, false);
+                        }
+                    } else {
+                        listView.setItemChecked(pos, true);
+                        listView.smoothScrollToPosition(pos);
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -127,35 +238,24 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         for (DataEvent event : events) {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 String path = event.getDataItem().getUri().getPath();
-                if (DataLayerListenerService.STEPS_PATH.equals(path)) {
-                    DataMapItem dataMapItem = DataMapItem.fromDataItem(event.getDataItem());
-                    final String[] steps = dataMapItem.getDataMap().getStringArray(DataLayerListenerService.STEPS_KEY);
-                    if(steps.length >= 3) {
-                        title = steps[0];
-                        subtitle = steps[1];
-                        instructions = Arrays.copyOfRange(steps, 2, steps.length);
-                        mHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                Log.d(TAG, "Populating wear steps...");
-                                titleTextView.setText(title);
-                                subtitleTextView.setText(subtitle);
-                                ArrayAdapter<String> adapter = new ArrayAdapter<>(MainWearActivity.this, android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
-                                listView.setAdapter(adapter);
-                            }
-                        });
-                    }
-                } else if (DataLayerListenerService.COUNT_PATH.equals(path)) {
-                    Log.d(TAG, "Data Changed for COUNT_PATH");
-                    generateEvent("DataItem Changed", event.getDataItem().toString());
-                } else {
-                    Log.d(TAG, "Unrecognized path: " + path);
+                switch(path) {
+                    case DataLayerListenerService.STEPS_PATH:
+                        populateSteps(DataMapItem.fromDataItem(event.getDataItem()));
+                        break;
+                    case DataLayerListenerService.POS_PATH:
+                        populateStepPosition(DataMapItem.fromDataItem(event.getDataItem()));
+                        break;
+                    default:
+                        Log.d(TAG, "Unrecognized path: " + path);
+                        break;
                 }
-
             } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                generateEvent("DataItem Deleted", event.getDataItem().toString());
+                Log.d(TAG, "DataItem Deleted: " + event.getDataItem().toString());
+                if(event.getDataItem().getUri().getPath().equals(DataLayerListenerService.STEPS_PATH)) {
+                    setAppEnabled(false);
+                }
             } else {
-                generateEvent("Unknown data event type", "Type = " + event.getType());
+                Log.e(TAG, "Unknown data event type: " + event.getType());
             }
         }
     }
@@ -163,17 +263,25 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     @Override
     public void onMessageReceived(MessageEvent event) {
         Log.d(TAG, "onMessageReceived: " + event);
-        generateEvent("Message", event.toString());
     }
 
     @Override
-    public void onPeerConnected(Node node) {
-        generateEvent("Node Connected", node.getId());
+    public void onPeerConnected(final Node node) {
+        Log.d(TAG, "Node Connected: " + node.getId());
+        setAppEnabled(true);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                stepsUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(node.getId()).path(DataLayerListenerService.STEPS_PATH).build();
+                getCurrentSteps();
+            }
+        }).start();
     }
 
     @Override
     public void onPeerDisconnected(Node node) {
-        generateEvent("Node Disconnected", node.getId());
+        Log.d(TAG, "Node Disconnected: " + node.getId());
+        setAppEnabled(false);
     }
 
     private static class DataItemAdapter extends ArrayAdapter<Event> {

@@ -23,9 +23,10 @@ public class DataLayerListenerService extends WearableListenerService {
 
     private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final String DATA_ITEM_RECEIVED_PATH = "/data-item-received";
-    public static final String COUNT_PATH = "/count";
     public static final String STEPS_PATH = "/steps";
     public static final String STEPS_KEY = "steps";
+    public static final String POS_PATH = "/pos";
+    public static final String POS_KEY = "pos";
     GoogleApiClient mGoogleApiClient;
 
     @Override
@@ -52,19 +53,19 @@ public class DataLayerListenerService extends WearableListenerService {
         }
 
         // Loop through the events and send a message back to the node that created the data item.
-        for (DataEvent event : events) {
-            Uri uri = event.getDataItem().getUri();
-            String path = uri.getPath();
-            if (COUNT_PATH.equals(path)) {
-                // Get the node id of the node that created the data item from the host portion of the uri.
-                String nodeId = uri.getHost();
-                // Set the data of the message to be the bytes of the Uri.
-                byte[] payload = uri.toString().getBytes();
-
-                // Send the rpc
-                Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, DATA_ITEM_RECEIVED_PATH, payload);
-            }
-        }
+//        for (DataEvent event : events) {
+//            Uri uri = event.getDataItem().getUri();
+//            String path = uri.getPath();
+//            if (COUNT_PATH.equals(path)) {
+//                // Get the node id of the node that created the data item from the host portion of the uri.
+//                String nodeId = uri.getHost();
+//                // Set the data of the message to be the bytes of the Uri.
+//                byte[] payload = uri.toString().getBytes();
+//
+//                // Send the rpc
+//                Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, DATA_ITEM_RECEIVED_PATH, payload);
+//            }
+//        }
     }
 
     @Override

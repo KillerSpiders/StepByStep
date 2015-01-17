@@ -20,6 +20,7 @@ import com.google.android.gms.common.data.FreezableUtils;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
@@ -49,14 +50,12 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final String STEPS_PATH = "/steps";
     private static final String STEPS_KEY = "steps";
-    private static final String COUNT_PATH = "/count";
-    private static final String COUNT_KEY = "count";
+    public static final String POS_PATH = "/pos";
+    public static final String POS_KEY = "pos";
 
     private GoogleApiClient mGoogleApiClient;
     private boolean mResolvingError = false;
     private Handler mHandler;
-    private ScheduledExecutorService mGeneratorExecutor;
-    private ScheduledFuture<?> mDataItemGeneratorFuture;
 
     public final static FragmentMap[] SECTIONS = {
             new FragmentMap(R.string.action_home, HomeFragment.class),
@@ -90,7 +89,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         mTitle = getTitle();
         mNavigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
 
-        mGeneratorExecutor = new ScheduledThreadPoolExecutor(1);
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
@@ -205,13 +203,11 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     @Override
     public void onResume() {
         super.onResume();
-        mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay( new DataItemGenerator(), 1, 5, TimeUnit.SECONDS);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
     }
 
     @Override
@@ -335,9 +331,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         return results;
     }
 
-    protected void sendStepsToWearable(String[] steps) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(STEPS_PATH);
-        dataMap.getDataMap().putStringArray(STEPS_KEY, steps);
+    protected void sendToWearable(PutDataMapRequest dataMap, final String name) {
         dataMap.getDataMap().putLong("time", new Date().getTime());
         PutDataRequest request = dataMap.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, request)
@@ -345,13 +339,25 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                     @Override
                     public void onResult(DataApi.DataItemResult dataItemResult) {
                         if(dataItemResult.getStatus().isSuccess()) {
-                            Log.d(TAG, "Sending steps succeeded");
+                            Log.d(TAG, "sent " + name);
                         } else {
-                            Log.e(TAG, "Sending steps failed");
+                            Log.e(TAG, "failed to send " + name);
+                            Toast.makeText(MainMobileActivity.this, "failed to send " + name, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
+    }
 
+    protected void sendStepPositionToWearable(int pos) {
+        PutDataMapRequest dataMap = PutDataMapRequest.create(POS_PATH);
+        dataMap.getDataMap().putInt(POS_KEY, pos);
+        sendToWearable(dataMap, "pos");
+    }
+
+    protected void sendStepsToWearable(String[] steps) {
+        PutDataMapRequest dataMap = PutDataMapRequest.create(STEPS_PATH);
+        dataMap.getDataMap().putStringArray(STEPS_KEY, steps);
+        sendToWearable(dataMap, "steps");
     }
 
     private void sendStartActivityMessage(String node) {
@@ -361,8 +367,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {
                         if (!sendMessageResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "Failed to send message with status code: "
-                                    + sendMessageResult.getStatus().getStatusCode());
+                            Log.e(TAG, "Failed to send message with status code: " + sendMessageResult.getStatus().getStatusCode());
                         }
                     }
                 }
@@ -378,34 +383,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                 sendStartActivityMessage(node);
             }
             return null;
-        }
-    }
-
-    /** Generates a DataItem based on an incrementing count. */
-    private class DataItemGenerator implements Runnable {
-
-        private int count = 0;
-
-        @Override
-        public void run() {
-            PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
-            putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
-            PutDataRequest request = putDataMapRequest.asPutDataRequest();
-
-            Log.d(TAG, "Generating DataItem: " + request);
-            if (!mGoogleApiClient.isConnected()) {
-                return;
-            }
-            Wearable.DataApi.putDataItem(mGoogleApiClient, request)
-                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-                        @Override
-                        public void onResult(DataApi.DataItemResult dataItemResult) {
-                            if (!dataItemResult.getStatus().isSuccess()) {
-                                Log.e(TAG, "ERROR: failed to putDataItem, status code: "
-                                        + dataItemResult.getStatus().getStatusCode());
-                            }
-                        }
-                    });
         }
     }
 }

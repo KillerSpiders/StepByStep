@@ -6,13 +6,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Arrays;
 
-public class StepFragment extends Fragment {
+public class StepFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private static final String ARG_STEPS_ID = "arg_steps_id";
 
@@ -22,9 +23,6 @@ public class StepFragment extends Fragment {
     private String subtitle = "so they'll show up here";
 
     private String[] instructions = new String[] {};
-
-    public StepFragment() {
-    }
 
     public static StepFragment newInstance(String name, int stepsId) {
         StepFragment fragment = new StepFragment();
@@ -55,6 +53,7 @@ public class StepFragment extends Fragment {
         ((TextView) rootView.findViewById(R.id.textViewSubtitle)).setText(subtitle);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(this);
         return rootView;
     }
 
@@ -62,5 +61,10 @@ public class StepFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        ((MainMobileActivity)getActivity()).sendStepPositionToWearable(position);
     }
 }
