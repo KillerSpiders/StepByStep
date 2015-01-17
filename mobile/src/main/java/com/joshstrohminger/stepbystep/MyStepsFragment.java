@@ -73,7 +73,7 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainMobileActivity)getActivity()).mNavigationDrawerFragment.selectItem(3);
+                ((MainMobileActivity)getActivity()).getSteps();
             }
         });
 

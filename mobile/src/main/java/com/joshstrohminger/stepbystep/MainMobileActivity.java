@@ -1,19 +1,16 @@
 package com.joshstrohminger.stepbystep;
 
-import android.app.Activity;
-
 import android.app.ActionBar;
+import android.app.Activity;
 import android.app.Fragment;
 import android.content.IntentSender;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.support.v4.widget.DrawerLayout;
-import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -62,14 +59,16 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             new FragmentMap(R.string.action_home, HomeFragment.class),
             new FragmentMap(R.string.action_my_steps, MyStepsFragment.class),
             new FragmentMap(R.string.action_step, NavigationDrawerFragment.PlaceholderFragment.class),
-            new FragmentMap(R.string.action_get_steps, NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(R.string.action_get_steps, GetStepsFragment.class),
             new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
+
+    private int getStepsIndex;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    protected NavigationDrawerFragment mNavigationDrawerFragment;
+    private NavigationDrawerFragment mNavigationDrawerFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -79,6 +78,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mHandler = new Handler();
         setContentView(R.layout.activity_main_mobile);
 
         mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -91,6 +91,17 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
+
+        for(int i = 0; i < SECTIONS.length; i++) {
+            if(SECTIONS[i].getFragmentClass() == GetStepsFragment.class) {
+                getStepsIndex = i;
+                break;
+            }
+        }
+    }
+
+    protected void getSteps() {
+        mNavigationDrawerFragment.selectItem(getStepsIndex);
     }
 
     @Override
@@ -103,6 +114,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             fragment = HomeFragment.newInstance(getTitle().toString());
         } else if(type == MyStepsFragment.class) {
             fragment = MyStepsFragment.newInstance(getString(map.getFragmentName()));
+        } else if(type == GetStepsFragment.class) {
+            fragment = GetStepsFragment.newInstance(getString(map.getFragmentName()));
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
         } else {
@@ -153,7 +166,15 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_wear) {
-            Toast.makeText(this, "TODO: launch wear app", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "launching wear app", Toast.LENGTH_SHORT).show();
+
+            // Sends an RPC to start a fullscreen Activity on the wearable.
+            Log.d(TAG, "Generating RPC");
+
+            // Trigger an AsyncTask that will query for a list of connected nodes and send a
+            // "start-activity" message to each connected node.
+            new StartWearableActivityTask().execute();
+
             return true;
         }
 
@@ -291,9 +312,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     private Collection<String> getNodes() {
-        HashSet<String> results = new HashSet<String>();
-        NodeApi.GetConnectedNodesResult nodes =
-                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+        HashSet<String> results = new HashSet<>();
+        NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
 
         for (Node node : nodes.getNodes()) {
             results.add(node.getId());
@@ -327,15 +347,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             }
             return null;
         }
-    }
-
-    /** Sends an RPC to start a fullscreen Activity on the wearable. */
-    public void onStartWearableActivityClick(View view) {
-        Log.d(TAG, "Generating RPC");
-
-        // Trigger an AsyncTask that will query for a list of connected nodes and send a
-        // "start-activity" message to each connected node.
-        new StartWearableActivityTask().execute();
     }
 
     /** Generates a DataItem based on an incrementing count. */
