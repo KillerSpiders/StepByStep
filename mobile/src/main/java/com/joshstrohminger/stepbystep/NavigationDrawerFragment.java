@@ -29,6 +29,14 @@ import android.widget.Toast;
  */
 public class NavigationDrawerFragment extends Fragment {
 
+    public static final String ARG_SECTION_NUMBER = "arg_section_number";
+
+    static final FragmentMap[] SECTIONS = {
+            new FragmentMap("Tester", NotificationFragment.class),
+            new FragmentMap("Sec 2", PlaceholderFragment.class),
+            new FragmentMap("Sec 3", PlaceholderFragment.class)
+    };
+
     /**
      * Remember the position of the selected item.
      */
@@ -97,15 +105,15 @@ public class NavigationDrawerFragment extends Fragment {
                 selectItem(position);
             }
         });
+        String[] names = new String[SECTIONS.length];
+        for( int i = 0; i < SECTIONS.length; i++) {
+            names[i] = SECTIONS[i].getFragmentTitle();
+        }
         mDrawerListView.setAdapter(new ArrayAdapter<String>(
                 getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
                 android.R.id.text1,
-                new String[]{
-                        getString(R.string.title_section1),
-                        getString(R.string.title_section2),
-                        getString(R.string.title_section3),
-                }));
+                names));
         mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
         return mDrawerListView;
     }
@@ -278,5 +286,36 @@ public class NavigationDrawerFragment extends Fragment {
          * Called when an item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position);
+    }
+
+
+    /**
+     * A placeholder fragment containing a simple view.
+     */
+    public static class PlaceholderFragment extends Fragment {
+
+        public PlaceholderFragment() {
+        }
+
+        public static PlaceholderFragment newInstance(int sectionNumber) {
+            PlaceholderFragment fragment = new PlaceholderFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_main_mobile, container, false);
+            return rootView;
+        }
+
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            ((MainMobileActivity) activity).onSectionAttached(getArguments().getInt(ARG_SECTION_NUMBER));
+        }
     }
 }
