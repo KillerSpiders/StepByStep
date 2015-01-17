@@ -31,10 +31,10 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
     public MyStepsFragment() {
     }
 
-    public static MyStepsFragment newInstance(int sectionNumber) {
+    public static MyStepsFragment newInstance(String name) {
         MyStepsFragment fragment = new MyStepsFragment();
         Bundle args = new Bundle();
-        args.putInt(NavigationDrawerFragment.ARG_SECTION_NUMBER, sectionNumber);
+        args.putString(NavigationDrawerFragment.ARG_SECTION_TITLE, name);
         fragment.setArguments(args);
         return fragment;
     }
@@ -73,7 +73,7 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getFragmentManager().beginTransaction().replace(R.id.container, NavigationDrawerFragment.PlaceholderFragment).commit();
+                ((MainMobileActivity)getActivity()).mNavigationDrawerFragment.selectItem(3);
             }
         });
 
@@ -83,7 +83,7 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        ((MainMobileActivity) activity).onSectionAttached(getArguments().getInt(NavigationDrawerFragment.ARG_SECTION_NUMBER));
+        ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
     }
 
     @Override

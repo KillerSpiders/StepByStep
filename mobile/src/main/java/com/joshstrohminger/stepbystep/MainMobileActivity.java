@@ -58,18 +58,18 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private ScheduledExecutorService mGeneratorExecutor;
     private ScheduledFuture<?> mDataItemGeneratorFuture;
 
-    public final FragmentMap[] SECTIONS = {
-            new FragmentMap(getString(R.string.action_home), HomeFragment.class, false),
-            new FragmentMap(getString(R.string.action_my_steps), MyStepsFragment.class),
-            new FragmentMap(getString(R.string.action_step), NavigationDrawerFragment.PlaceholderFragment.class),
-            new FragmentMap(getString(R.string.action_get_steps), NavigationDrawerFragment.PlaceholderFragment.class),
-            new FragmentMap(getString(R.string.action_settings), NavigationDrawerFragment.PlaceholderFragment.class)
+    public final static FragmentMap[] SECTIONS = {
+            new FragmentMap(R.string.action_home, HomeFragment.class),
+            new FragmentMap(R.string.action_my_steps, MyStepsFragment.class),
+            new FragmentMap(R.string.action_step, NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(R.string.action_get_steps, NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    private NavigationDrawerFragment mNavigationDrawerFragment;
+    protected NavigationDrawerFragment mNavigationDrawerFragment;
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -97,13 +97,14 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         Fragment fragment;
-        Class<? extends Fragment> type = SECTIONS[position].getFragmentClass();
+        FragmentMap map = SECTIONS[position];
+        Class<? extends Fragment> type = map.getFragmentClass();
         if(type == HomeFragment.class) {
-            fragment = HomeFragment.newInstance(position);
+            fragment = HomeFragment.newInstance(getTitle().toString());
         } else if(type == MyStepsFragment.class) {
-            fragment = MyStepsFragment.newInstance(position);
+            fragment = MyStepsFragment.newInstance(getString(map.getFragmentName()));
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
-            fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(position);
+            fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
@@ -111,9 +112,9 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
     }
 
-    public void onSectionAttached(int number) {
-        FragmentMap map = SECTIONS[number];
-        mTitle = map.shouldUseNameAsTitle() ? map.getFragmentName() : getTitle();
+    public void onSectionAttached(String title) {
+        mTitle = title;
+        restoreActionBar();
     }
 
     public void restoreActionBar() {
@@ -128,7 +129,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             getMenuInflater().inflate(R.menu.main_mobile, menu);
-            restoreActionBar();
+            //restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);

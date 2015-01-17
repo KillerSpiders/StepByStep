@@ -22,10 +22,10 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static HomeFragment newInstance(int sectionNumber) {
+    public static HomeFragment newInstance(String name) {
         HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
-        args.putInt(NavigationDrawerFragment.ARG_SECTION_NUMBER, sectionNumber);
+        args.putString(NavigationDrawerFragment.ARG_SECTION_TITLE, name);
         fragment.setArguments(args);
         return fragment;
     }
@@ -66,6 +66,6 @@ public class HomeFragment extends Fragment {
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        ((MainMobileActivity) activity).onSectionAttached(getArguments().getInt(NavigationDrawerFragment.ARG_SECTION_NUMBER));
+        ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
     }
 }

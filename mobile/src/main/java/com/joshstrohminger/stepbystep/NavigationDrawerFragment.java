@@ -28,15 +28,7 @@ import android.widget.ListView;
  */
 public class NavigationDrawerFragment extends Fragment {
 
-    public static final String ARG_SECTION_NUMBER = "arg_section_number";
-
-    public final FragmentMap[] SECTIONS = {
-            new FragmentMap(getString(R.string.action_home), HomeFragment.class, false),
-            new FragmentMap(getString(R.string.action_my_steps), MyStepsFragment.class),
-            new FragmentMap(getString(R.string.action_step), PlaceholderFragment.class),
-            new FragmentMap(getString(R.string.action_get_steps), PlaceholderFragment.class),
-            new FragmentMap(getString(R.string.action_settings), PlaceholderFragment.class)
-    };
+    public static final String ARG_SECTION_TITLE = "arg_section_title";
 
     /**
      * Remember the position of the selected item.
@@ -106,11 +98,11 @@ public class NavigationDrawerFragment extends Fragment {
                 selectItem(position);
             }
         });
-        String[] names = new String[SECTIONS.length];
-        for( int i = 0; i < SECTIONS.length; i++) {
-            names[i] = SECTIONS[i].getFragmentName();
+        String[] names = new String[MainMobileActivity.SECTIONS.length];
+        for( int i = 0; i < MainMobileActivity.SECTIONS.length; i++) {
+            names[i] = getString(MainMobileActivity.SECTIONS[i].getFragmentName());
         }
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
+        mDrawerListView.setAdapter(new ArrayAdapter<>(
                 getActionBar().getThemedContext(),
                 android.R.layout.simple_list_item_activated_1,
                 android.R.id.text1,
@@ -197,12 +189,12 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    private void selectItem(int position) {
+    protected void selectItem(int position) {
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
         }
-        if (mDrawerLayout != null) {
+        if (mDrawerLayout != null && isDrawerOpen()) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null) {
@@ -292,10 +284,10 @@ public class NavigationDrawerFragment extends Fragment {
         public PlaceholderFragment() {
         }
 
-        public static PlaceholderFragment newInstance(int sectionNumber) {
+        public static PlaceholderFragment newInstance(String title) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            args.putString(ARG_SECTION_TITLE, title);
             fragment.setArguments(args);
             return fragment;
         }
@@ -310,7 +302,7 @@ public class NavigationDrawerFragment extends Fragment {
         @Override
         public void onAttach(Activity activity) {
             super.onAttach(activity);
-            ((MainMobileActivity) activity).onSectionAttached(getArguments().getInt(ARG_SECTION_NUMBER));
+            ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(ARG_SECTION_TITLE));
         }
     }
 }
