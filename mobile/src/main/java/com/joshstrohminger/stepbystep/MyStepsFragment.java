@@ -19,8 +19,8 @@ import java.util.List;
 public class MyStepsFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private ListView listView;
-    private ArrayAdapter<String[]> adapter;
-    private List<String[]> data;
+    private ArrayAdapter<StepsHolder> adapter;
+    private List<StepsHolder> data;
     private Toast toast;
 
     private final int[] defaultIds = new int[]{
@@ -39,6 +39,18 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         return fragment;
     }
 
+    private static class StepsHolder {
+        public int id;
+        public String title;
+        public String author;
+
+        private StepsHolder(int id, String title, String author) {
+            this.id = id;
+            this.title = title;
+            this.author = author;
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -52,17 +64,17 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         for( int id : defaultIds) {
             steps = getResources().getStringArray(id);
             if( steps.length >= 3) {
-                data.add(Arrays.copyOf(steps, 2));
+                data.add(new StepsHolder(id, steps[0], steps[1]));
             }
         }
 
-        adapter = new ArrayAdapter<String[]>(getActivity(), android.R.layout.simple_list_item_2, android.R.id.text1, data) {
+        adapter = new ArrayAdapter<StepsHolder>(getActivity(), android.R.layout.simple_list_item_2, android.R.id.text1, data) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                String[] entry = data.get(position);
-                ((TextView)view.findViewById(android.R.id.text1)).setText(entry[0]);
-                ((TextView)view.findViewById(android.R.id.text2)).setText(entry[1]);
+                StepsHolder entry = data.get(position);
+                ((TextView)view.findViewById(android.R.id.text1)).setText(entry.title);
+                ((TextView)view.findViewById(android.R.id.text2)).setText(entry.author);
                 return view;
             }
         };
@@ -88,10 +100,6 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        if(toast != null) {
-            toast.cancel();
-        }
-        toast = Toast.makeText(getActivity(), "selected position " + position, Toast.LENGTH_SHORT);
-        toast.show();
+        ((MainMobileActivity)getActivity()).step(data.get(position).id);
     }
 }

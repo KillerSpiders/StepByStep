@@ -58,12 +58,14 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public final static FragmentMap[] SECTIONS = {
             new FragmentMap(R.string.action_home, HomeFragment.class),
             new FragmentMap(R.string.action_my_steps, MyStepsFragment.class),
-            new FragmentMap(R.string.action_step, NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(R.string.action_step, StepFragment.class),
             new FragmentMap(R.string.action_get_steps, GetStepsFragment.class),
             new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
 
     private int getStepsIndex;
+    private int stepIndex;
+    private int nextStepsId;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -95,13 +97,19 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         for(int i = 0; i < SECTIONS.length; i++) {
             if(SECTIONS[i].getFragmentClass() == GetStepsFragment.class) {
                 getStepsIndex = i;
-                break;
+            } else if(SECTIONS[i].getFragmentClass() == StepFragment.class) {
+                stepIndex = i;
             }
         }
     }
 
     protected void getSteps() {
         mNavigationDrawerFragment.selectItem(getStepsIndex);
+    }
+
+    protected void step(int stepsId) {
+        nextStepsId = stepsId;
+        mNavigationDrawerFragment.selectItem(stepIndex);
     }
 
     @Override
@@ -118,6 +126,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             fragment = GetStepsFragment.newInstance(getString(map.getFragmentName()));
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
+        } else if(type == StepFragment.class) {
+            fragment = StepFragment.newInstance(getString(map.getFragmentName()), nextStepsId);
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
