@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string-array name="steps_paper_airplane">
+        <item>How to fold a paper airplane</item>
+        <item>Just some dude</item>
+        <item>Place on desk in portrait orientation.</item>
+        <item>Fold the top-right corner half way across the paper from right to left.</item>
+        <item>Fold the top-left corner half way across the paper from left to right.</item>
+        <item>Fold the middle-right corner half way across the paper from right to left.</item>
+        <item>Fold the middle-left corner half way across the paper from left to right.</item>
+        <item>Fold the whole paper in half with the flaps on the inside.</item>
+        <item>Fold the outer-left flap back at a 90\u00B0 angle to create the left wing.</item>
+        <item>Fold the outer-right flap back at a 90\u00B0 angle to create the right wing.</item>
+    </string-array>
+
+    <string-array name="steps_stand_on_one_foot">
+        <item>How to stand on one foot</item>
+        <item>The killer spider</item>
+        <item>Stand in place on both feet.</item>
+        <item>Lift one foot into the air.</item>
+        <item>Wait.</item>
+    </string-array>
+    
+</resources>

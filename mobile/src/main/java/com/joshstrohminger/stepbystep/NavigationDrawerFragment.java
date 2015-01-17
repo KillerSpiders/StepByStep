@@ -32,7 +32,7 @@ public class NavigationDrawerFragment extends Fragment {
 
     static final FragmentMap[] SECTIONS = {
             new FragmentMap("Home", HomeFragment.class, false),
-            new FragmentMap("My Steps", PlaceholderFragment.class),
+            new FragmentMap("My Steps", MyStepsFragment.class),
             new FragmentMap("Step", PlaceholderFragment.class),
             new FragmentMap("Get Steps", PlaceholderFragment.class),
             new FragmentMap("Settings", PlaceholderFragment.class)
@@ -303,7 +303,7 @@ public class NavigationDrawerFragment extends Fragment {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main_mobile, container, false);
+            View rootView = inflater.inflate(R.layout.fragment_placeholder, container, false);
             return rootView;
         }
 

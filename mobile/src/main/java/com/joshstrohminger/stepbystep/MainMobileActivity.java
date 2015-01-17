@@ -95,6 +95,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Class<? extends Fragment> type = NavigationDrawerFragment.SECTIONS[position].getFragmentClass();
         if(type == HomeFragment.class) {
             fragment = HomeFragment.newInstance(position);
+        } else if(type == MyStepsFragment.class) {
+            fragment = MyStepsFragment.newInstance(position);
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(position);
         } else {
