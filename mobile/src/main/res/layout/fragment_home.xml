@@ -43,15 +43,6 @@
         android:layout_alignEnd="@id/textViewTitle"
         android:layout_marginTop="50dp" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Open Wear app"
-        android:id="@+id/buttonOpenWearApp"
-        android:layout_below="@id/buttonSendNotification"
-        android:layout_alignEnd="@id/buttonSendNotification"
-        android:layout_marginTop="20dp" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -66,13 +57,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Team:\n\nKiller Spiders\n\nOur name is random...\n\nbut our code is not..."
+        android:text="Team:\n\nKiller Spiders\n\nOur name is random...\n\nour code is not..."
         android:singleLine="false"
         android:gravity="center_vertical"
         android:id="@+id/textViewAuthor"
         android:layout_marginStart="30dp"
         android:layout_toEndOf="@id/imageView"
-        android:layout_below="@id/buttonOpenWearApp"
-        android:layout_alignEnd="@id/buttonOpenWearApp"
+        android:layout_below="@id/buttonSendNotification"
+        android:layout_alignEnd="@id/buttonSendNotification"
         android:layout_above="@id/textViewAbout" />
 </RelativeLayout>

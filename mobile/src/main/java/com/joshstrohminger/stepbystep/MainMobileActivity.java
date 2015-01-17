@@ -65,7 +65,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
 
     private int getStepsIndex;
     private int stepIndex;
-    private int nextStepsId;
+    private int currentStepsId;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -108,7 +108,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     protected void step(int stepsId) {
-        nextStepsId = stepsId;
+        currentStepsId = stepsId;
         mNavigationDrawerFragment.selectItem(stepIndex);
     }
 
@@ -127,7 +127,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
         } else if(type == StepFragment.class) {
-            fragment = StepFragment.newInstance(getString(map.getFragmentName()), nextStepsId);
+            fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsId);
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
