@@ -32,6 +32,7 @@ public class NavigationDrawerFragment extends Fragment {
     static final FragmentMap[] SECTIONS = {
             new FragmentMap("Home", HomeFragment.class, false),
             new FragmentMap("My Steps", PlaceholderFragment.class),
+            new FragmentMap("Step", PlaceholderFragment.class),
             new FragmentMap("Get Steps", PlaceholderFragment.class),
             new FragmentMap("Settings", PlaceholderFragment.class)
     };

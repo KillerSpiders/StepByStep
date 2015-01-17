@@ -10,9 +10,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.support.v4.widget.DrawerLayout;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -74,8 +76,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_mobile);
 
-        mStartActivityBtn = new Button(this);   // TODO: GET RID OF THIS
-
         mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
         mTitle = getTitle();
         mNavigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
@@ -120,10 +120,36 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
+            getMenuInflater().inflate(R.menu.main_mobile, menu);
             restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem wear = menu.findItem(R.id.action_wear);
+        if(wear != null) {
+            wear.setEnabled(mGoogleApiClient.isConnected());
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_wear) {
+            Toast.makeText(this, "TODO: launch wear app", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -161,7 +187,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public void onConnected(Bundle connectionHint) {
         Log.d(TAG, "Google API Client was connected");
         mResolvingError = false;
-        mStartActivityBtn.setEnabled(true);
+        invalidateOptionsMenu();    //enable button
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
@@ -170,7 +196,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     @Override //ConnectionCallbacks
     public void onConnectionSuspended(int cause) {
         Log.d(TAG, "Connection to Google API client was suspended");
-        mStartActivityBtn.setEnabled(false);
+        invalidateOptionsMenu();    //disable button
     }
 
     @Override //OnConnectionFailedListener
@@ -189,7 +215,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         } else {
             Log.e(TAG, "Connection to Google API client has failed");
             mResolvingError = false;
-            mStartActivityBtn.setEnabled(false);
+            invalidateOptionsMenu();    //disable button
             Wearable.DataApi.removeListener(mGoogleApiClient, this);
             Wearable.MessageApi.removeListener(mGoogleApiClient, this);
             Wearable.NodeApi.removeListener(mGoogleApiClient, this);
