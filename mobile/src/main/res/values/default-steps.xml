@@ -12,6 +12,7 @@
         <item>Fold the whole paper in half with the flaps on the inside.</item>
         <item>Fold the outer-left flap back at a 90\u00B0 angle to create the left wing.</item>
         <item>Fold the outer-right flap back at a 90\u00B0 angle to create the right wing.</item>
+        <item>Throw.</item>
     </string-array>
 
     <string-array name="steps_stand_on_one_foot">
