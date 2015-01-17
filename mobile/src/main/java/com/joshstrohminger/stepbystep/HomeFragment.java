@@ -13,17 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-public class NotificationFragment extends Fragment {
+public class HomeFragment extends Fragment {
 
     Button buttonSendNotification;
     int count;
 
-    public NotificationFragment() {
+    public HomeFragment() {
         // Required empty public constructor
     }
 
-    public static NotificationFragment newInstance(int sectionNumber) {
-        NotificationFragment fragment = new NotificationFragment();
+    public static HomeFragment newInstance(int sectionNumber) {
+        HomeFragment fragment = new HomeFragment();
         Bundle args = new Bundle();
         args.putInt(NavigationDrawerFragment.ARG_SECTION_NUMBER, sectionNumber);
         fragment.setArguments(args);
@@ -34,10 +34,10 @@ public class NotificationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View root = inflater.inflate(R.layout.fragment_notification, container, false);
+        View root = inflater.inflate(R.layout.fragment_home, container, false);
         buttonSendNotification = (Button) root.findViewById(R.id.buttonSendNotification);
         count = 1;
-        buttonSendNotification.setText("Send Notification " + count++);
+        buttonSendNotification.setText("Send Note " + count);
         buttonSendNotification.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -57,7 +57,7 @@ public class NotificationFragment extends Fragment {
                                         .setContentIconGravity(count % 2 == 0 ? Gravity.START : Gravity.NO_GRAVITY)
                         ).build();
                 NotificationManagerCompat.from(getActivity()).notify(count, note);
-                buttonSendNotification.setText("Send Notification " + count++);
+                buttonSendNotification.setText("Send Note " + ++count);
             }
         });
         return root;
@@ -68,5 +68,4 @@ public class NotificationFragment extends Fragment {
         super.onAttach(activity);
         ((MainMobileActivity) activity).onSectionAttached(getArguments().getInt(NavigationDrawerFragment.ARG_SECTION_NUMBER));
     }
-
 }

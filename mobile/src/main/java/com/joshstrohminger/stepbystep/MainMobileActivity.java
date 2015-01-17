@@ -4,28 +4,60 @@ import android.app.Activity;
 
 import android.app.ActionBar;
 import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.Context;
-import android.net.Uri;
-import android.os.Build;
+import android.content.IntentSender;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
+import android.widget.Button;
 
-import java.lang.reflect.InvocationTargetException;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.data.FreezableUtils;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
-public class MainMobileActivity extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+public class MainMobileActivity extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks, DataApi.DataListener,
+        MessageApi.MessageListener, NodeApi.NodeListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     public static final String TAG = MainMobileActivity.class.getSimpleName();
+
+    /** Request code for launching the Intent to resolve Google Play services errors. */
+    private static final int REQUEST_RESOLVE_ERROR = 1000;
+
+    private static final String START_ACTIVITY_PATH = "/start-activity";
+    private static final String COUNT_PATH = "/count";
+    private static final String COUNT_KEY = "count";
+
+    private GoogleApiClient mGoogleApiClient;
+    private boolean mResolvingError = false;
+    private Handler mHandler;
+    private ScheduledExecutorService mGeneratorExecutor;
+    private ScheduledFuture<?> mDataItemGeneratorFuture;
+
+
+    Button mStartActivityBtn;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -42,14 +74,18 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_mobile);
 
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
-                getFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
+        mStartActivityBtn = new Button(this);   // TODO: GET RID OF THIS
 
-        // Set up the drawer.
-        mNavigationDrawerFragment.setUp(
-                R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
+        mNavigationDrawerFragment = (NavigationDrawerFragment) getFragmentManager().findFragmentById(R.id.navigation_drawer);
+        mTitle = getTitle();
+        mNavigationDrawerFragment.setUp(R.id.navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        mGeneratorExecutor = new ScheduledThreadPoolExecutor(1);
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
     @Override
@@ -57,12 +93,11 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         // update the main content by replacing fragments
         Fragment fragment;
         Class<? extends Fragment> type = NavigationDrawerFragment.SECTIONS[position].getFragmentClass();
-        if(type == NotificationFragment.class) {
-            fragment = NotificationFragment.newInstance(position);
+        if(type == HomeFragment.class) {
+            fragment = HomeFragment.newInstance(position);
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(position);
         } else {
-            // error
             Log.e(TAG, "didn't find fragment class type");
             return;
         }
@@ -84,10 +119,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.main_mobile, menu);
             restoreActionBar();
             return true;
         }
@@ -95,17 +126,208 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    protected void onStart() {
+        super.onStart();
+        if (!mResolvingError) {
+            mGoogleApiClient.connect();
+        }
+    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    @Override
+    public void onResume() {
+        super.onResume();
+        mDataItemGeneratorFuture = mGeneratorExecutor.scheduleWithFixedDelay( new DataItemGenerator(), 1, 5, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mDataItemGeneratorFuture.cancel(true /* mayInterruptIfRunning */);
+    }
+
+    @Override
+    protected void onStop() {
+        if (!mResolvingError) {
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+            Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+            Wearable.NodeApi.removeListener(mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+        super.onStop();
+    }
+
+    @Override //ConnectionCallbacks
+    public void onConnected(Bundle connectionHint) {
+        Log.d(TAG, "Google API Client was connected");
+        mResolvingError = false;
+        mStartActivityBtn.setEnabled(true);
+        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
+        Wearable.NodeApi.addListener(mGoogleApiClient, this);
+    }
+
+    @Override //ConnectionCallbacks
+    public void onConnectionSuspended(int cause) {
+        Log.d(TAG, "Connection to Google API client was suspended");
+        mStartActivityBtn.setEnabled(false);
+    }
+
+    @Override //OnConnectionFailedListener
+    public void onConnectionFailed(ConnectionResult result) {
+        if (mResolvingError) {
+            // Already attempting to resolve an error.
+            return;
+        } else if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                mGoogleApiClient.connect();
+            }
+        } else {
+            Log.e(TAG, "Connection to Google API client has failed");
+            mResolvingError = false;
+            mStartActivityBtn.setEnabled(false);
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+            Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+            Wearable.NodeApi.removeListener(mGoogleApiClient, this);
+        }
+    }
+
+    @Override //DataListener
+    public void onDataChanged(DataEventBuffer dataEvents) {
+        Log.d(TAG, "onDataChanged: " + dataEvents);
+        final List<DataEvent> events = FreezableUtils.freezeIterable(dataEvents);
+        dataEvents.close();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for (DataEvent event : events) {
+                    if (event.getType() == DataEvent.TYPE_CHANGED) {
+                        // TODO: DO SOMETHING
+                        //mDataItemListAdapter.add( new Event("DataItem Changed", event.getDataItem().toString()));
+                    } else if (event.getType() == DataEvent.TYPE_DELETED) {
+                        // TODO: DO SOMETHING
+                        //mDataItemListAdapter.add( new Event("DataItem Deleted", event.getDataItem().toString()));
+                    }
+                }
+            }
+        });
+    }
+
+    @Override //MessageListener
+    public void onMessageReceived(final MessageEvent messageEvent) {
+        Log.d(TAG, "onMessageReceived() A message from watch was received:" + messageEvent
+                .getRequestId() + " " + messageEvent.getPath());
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // TODO: DO SOMETHING
+                //mDataItemListAdapter.add(new Event("Message from watch", messageEvent.toString()));
+            }
+        });
+
+    }
+
+    @Override //NodeListener
+    public void onPeerConnected(final Node peer) {
+        Log.d(TAG, "onPeerConnected: " + peer);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // TODO: DO SOMETHING
+                //mDataItemListAdapter.add(new Event("Connected", peer.toString()));
+            }
+        });
+
+    }
+
+    @Override //NodeListener
+    public void onPeerDisconnected(final Node peer) {
+        Log.d(TAG, "onPeerDisconnected: " + peer);
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                // TODO: DO SOMETHING
+                //mDataItemListAdapter.add(new Event("Disconnected", peer.toString()));
+            }
+        });
+    }
+
+    private Collection<String> getNodes() {
+        HashSet<String> results = new HashSet<String>();
+        NodeApi.GetConnectedNodesResult nodes =
+                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+
+        for (Node node : nodes.getNodes()) {
+            results.add(node.getId());
         }
 
-        return super.onOptionsItemSelected(item);
+        return results;
+    }
+
+    private void sendStartActivityMessage(String node) {
+        Wearable.MessageApi.sendMessage(
+                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.e(TAG, "Failed to send message with status code: "
+                                    + sendMessageResult.getStatus().getStatusCode());
+                        }
+                    }
+                }
+        );
+    }
+
+    private class StartWearableActivityTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... args) {
+            Collection<String> nodes = getNodes();
+            for (String node : nodes) {
+                sendStartActivityMessage(node);
+            }
+            return null;
+        }
+    }
+
+    /** Sends an RPC to start a fullscreen Activity on the wearable. */
+    public void onStartWearableActivityClick(View view) {
+        Log.d(TAG, "Generating RPC");
+
+        // Trigger an AsyncTask that will query for a list of connected nodes and send a
+        // "start-activity" message to each connected node.
+        new StartWearableActivityTask().execute();
+    }
+
+    /** Generates a DataItem based on an incrementing count. */
+    private class DataItemGenerator implements Runnable {
+
+        private int count = 0;
+
+        @Override
+        public void run() {
+            PutDataMapRequest putDataMapRequest = PutDataMapRequest.create(COUNT_PATH);
+            putDataMapRequest.getDataMap().putInt(COUNT_KEY, count++);
+            PutDataRequest request = putDataMapRequest.asPutDataRequest();
+
+            Log.d(TAG, "Generating DataItem: " + request);
+            if (!mGoogleApiClient.isConnected()) {
+                return;
+            }
+            Wearable.DataApi.putDataItem(mGoogleApiClient, request)
+                    .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                        @Override
+                        public void onResult(DataApi.DataItemResult dataItemResult) {
+                            if (!dataItemResult.getStatus().isSuccess()) {
+                                Log.e(TAG, "ERROR: failed to putDataItem, status code: "
+                                        + dataItemResult.getStatus().getStatusCode());
+                            }
+                        }
+                    });
+        }
     }
 }
