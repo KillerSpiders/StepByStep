@@ -70,6 +70,13 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
 
+        rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFragmentManager().beginTransaction().replace(R.id.container, NavigationDrawerFragment.PlaceholderFragment).commit();
+            }
+        });
+
         return rootView;
     }
 

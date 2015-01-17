@@ -30,12 +30,12 @@ public class NavigationDrawerFragment extends Fragment {
 
     public static final String ARG_SECTION_NUMBER = "arg_section_number";
 
-    static final FragmentMap[] SECTIONS = {
-            new FragmentMap("Home", HomeFragment.class, false),
-            new FragmentMap("My Steps", MyStepsFragment.class),
-            new FragmentMap("Step", PlaceholderFragment.class),
-            new FragmentMap("Get Steps", PlaceholderFragment.class),
-            new FragmentMap("Settings", PlaceholderFragment.class)
+    public final FragmentMap[] SECTIONS = {
+            new FragmentMap(getString(R.string.action_home), HomeFragment.class, false),
+            new FragmentMap(getString(R.string.action_my_steps), MyStepsFragment.class),
+            new FragmentMap(getString(R.string.action_step), PlaceholderFragment.class),
+            new FragmentMap(getString(R.string.action_get_steps), PlaceholderFragment.class),
+            new FragmentMap(getString(R.string.action_settings), PlaceholderFragment.class)
     };
 
     /**

@@ -58,8 +58,13 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private ScheduledExecutorService mGeneratorExecutor;
     private ScheduledFuture<?> mDataItemGeneratorFuture;
 
-
-    Button mStartActivityBtn;
+    public final FragmentMap[] SECTIONS = {
+            new FragmentMap(getString(R.string.action_home), HomeFragment.class, false),
+            new FragmentMap(getString(R.string.action_my_steps), MyStepsFragment.class),
+            new FragmentMap(getString(R.string.action_step), NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(getString(R.string.action_get_steps), NavigationDrawerFragment.PlaceholderFragment.class),
+            new FragmentMap(getString(R.string.action_settings), NavigationDrawerFragment.PlaceholderFragment.class)
+    };
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -92,7 +97,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         Fragment fragment;
-        Class<? extends Fragment> type = NavigationDrawerFragment.SECTIONS[position].getFragmentClass();
+        Class<? extends Fragment> type = SECTIONS[position].getFragmentClass();
         if(type == HomeFragment.class) {
             fragment = HomeFragment.newInstance(position);
         } else if(type == MyStepsFragment.class) {
@@ -107,7 +112,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     public void onSectionAttached(int number) {
-        FragmentMap map = NavigationDrawerFragment.SECTIONS[number];
+        FragmentMap map = SECTIONS[number];
         mTitle = map.shouldUseNameAsTitle() ? map.getFragmentName() : getTitle();
     }
 
