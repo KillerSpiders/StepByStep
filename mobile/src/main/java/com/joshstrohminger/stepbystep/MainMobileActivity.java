@@ -64,6 +64,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
 
+    private int myStepsIndex;
     private int getStepsIndex;
     private int stepIndex;
     private int currentStepsId;
@@ -99,15 +100,21 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                 getStepsIndex = i;
             } else if(SECTIONS[i].getFragmentClass() == StepFragment.class) {
                 stepIndex = i;
+            } else if(SECTIONS[i].getFragmentClass() == MyStepsFragment.class) {
+                myStepsIndex = i;
             }
         }
     }
 
-    protected void getSteps() {
+    protected void gotoGetSteps() {
         mNavigationDrawerFragment.selectItem(getStepsIndex, true);
     }
 
-    protected void step(int stepsId) {
+    protected void gotoMySteps() {
+        mNavigationDrawerFragment.selectItem(myStepsIndex, true);
+    }
+
+    protected void gotoStep(int stepsId) {
         currentStepsId = stepsId;
         mNavigationDrawerFragment.selectItem(stepIndex, true);
     }

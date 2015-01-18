@@ -64,4 +64,12 @@
         android:layout_alignStart="@+id/textViewSubtitle"
         tools:listitem="@android:layout/simple_list_item_single_choice"
         android:choiceMode="singleChoice"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Some Steps"
+        android:id="@+id/button"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

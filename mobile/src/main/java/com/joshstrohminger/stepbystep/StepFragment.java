@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -32,8 +33,6 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     private ListView listView;
     private String[] steps;
     private int stepsId;
-    private String title = "Please select some steps";
-    private String subtitle = "so they'll show up here";
 
     private String[] instructions = new String[] {};
 
@@ -49,23 +48,33 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_step, container, false);
+        Button button = (Button) rootView.findViewById(R.id.button);
+        TextView titleTextView = (TextView) rootView.findViewById(R.id.textViewTitle);
+        TextView subtitleTextView = (TextView) rootView.findViewById(R.id.textViewSubtitle);
         stepsId = getArguments().getInt(ARG_STEPS_ID);
         if(stepsId > 0) {
             steps = getResources().getStringArray(stepsId);
             if (steps.length >= 3) {
-                title = steps[0];
-                subtitle = steps[1];
+                titleTextView.setText(steps[0]);
+                subtitleTextView.setText(steps[1]);
                 instructions = Arrays.copyOfRange(steps, 2, steps.length);
+                button.setVisibility(View.INVISIBLE);
             }
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);
+            titleTextView.setVisibility(View.INVISIBLE);
+            subtitleTextView.setVisibility(View.INVISIBLE);
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ((MainMobileActivity)getActivity()).gotoMySteps();
+                }
+            });
         }
         statusTextView = (TextView) rootView.findViewById(R.id.statusTextView);
         playPauseButton = (ImageButton) rootView.findViewById(R.id.playPauseButton);
         skipButton = (ImageButton) rootView.findViewById(R.id.skipButton);
         listView = (ListView) rootView.findViewById(R.id.listView);
-        ((TextView) rootView.findViewById(R.id.textViewTitle)).setText(title);
-        ((TextView) rootView.findViewById(R.id.textViewSubtitle)).setText(subtitle);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
@@ -164,9 +173,9 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroyView() {
         speaker.shutdown();
-        super.onDestroy();
+        super.onDestroyView();
     }
 
     protected void updatePos(int pos) {

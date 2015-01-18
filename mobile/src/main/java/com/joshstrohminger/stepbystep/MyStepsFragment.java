@@ -13,15 +13,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MyStepsFragment extends Fragment implements AdapterView.OnItemClickListener {
 
-    private ListView listView;
-    private ArrayAdapter<StepsHolder> adapter;
     private List<StepsHolder> data;
-    private Toast toast;
 
     private final int[] defaultIds = new int[]{
             R.array.steps_paper_airplane,
@@ -55,7 +51,8 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_my_steps, container, false);
-        listView = (ListView) rootView.findViewById(R.id.listView);
+
+        ListView listView = (ListView) rootView.findViewById(R.id.listView);
 
         data = new ArrayList<>();
 
@@ -68,7 +65,7 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
             }
         }
 
-        adapter = new ArrayAdapter<StepsHolder>(getActivity(), android.R.layout.simple_list_item_2, android.R.id.text1, data) {
+        ArrayAdapter<StepsHolder> adapter = new ArrayAdapter<StepsHolder>(getActivity(), android.R.layout.simple_list_item_2, android.R.id.text1, data) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
@@ -85,7 +82,7 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         rootView.findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainMobileActivity)getActivity()).getSteps();
+                ((MainMobileActivity)getActivity()).gotoGetSteps();
             }
         });
 
@@ -100,6 +97,6 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        ((MainMobileActivity)getActivity()).step(data.get(position).id);
+        ((MainMobileActivity)getActivity()).gotoStep(data.get(position).id);
     }
 }
