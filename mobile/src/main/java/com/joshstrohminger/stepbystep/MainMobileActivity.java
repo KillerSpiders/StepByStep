@@ -3,6 +3,8 @@ package com.joshstrohminger.stepbystep;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.IntentSender;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -111,26 +113,72 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     @Override
-    public void onNavigationDrawerItemSelected(int position) {
+    public void onNavigationDrawerItemSelected(int oldPosition, int position) {
         // update the main content by replacing fragments
         Fragment fragment;
         FragmentMap map = SECTIONS[position];
         Class<? extends Fragment> type = map.getFragmentClass();
+        boolean allowBack = false;
+
         if(type == HomeFragment.class) {
             fragment = HomeFragment.newInstance(getTitle().toString());
         } else if(type == MyStepsFragment.class) {
             fragment = MyStepsFragment.newInstance(getString(map.getFragmentName()));
+            allowBack = true;
         } else if(type == GetStepsFragment.class) {
             fragment = GetStepsFragment.newInstance(getString(map.getFragmentName()));
+            allowBack = true;
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
+            allowBack = true;
         } else if(type == StepFragment.class) {
             fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsId);
+            allowBack = true;
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
         }
-        getFragmentManager().beginTransaction().replace(R.id.container, fragment, fragment.getClass().getSimpleName()).commit();
+        FragmentManager manager = getFragmentManager();
+
+        FragmentTransaction transaction = manager
+                .beginTransaction()
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                .replace(R.id.container, fragment, fragment.getClass().getSimpleName());
+
+        if(allowBack) {
+            transaction.addToBackStack(String.valueOf(oldPosition));
+        } else {
+            // clear the back stack
+            manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
+
+        transaction.commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        FragmentManager manager = getFragmentManager();
+        String name = null;
+        if(manager.getBackStackEntryCount() > 0) {
+            name = manager.getBackStackEntryAt(manager.getBackStackEntryCount()-1).getName();
+        }
+        if(name == null) {
+            name = "0";
+        }
+        try {
+            int position = Integer.parseInt(name);
+            Log.d(TAG, "backstack to pos " + position);
+            mNavigationDrawerFragment.setCurrentItemFromBackstack(position);
+            if(position == 0) {
+                mTitle = getTitle();
+            } else {
+                mTitle = getString(SECTIONS[position].getFragmentName());
+            }
+            restoreActionBar();
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "invalid fragment backstack name: " + name);
+        }
+        super.onBackPressed();
     }
 
     public void onSectionAttached(String title) {
@@ -144,7 +192,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

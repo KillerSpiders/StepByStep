@@ -8,7 +8,7 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.view.LayoutInflater;
@@ -136,12 +136,19 @@ public class NavigationDrawerFragment extends Fragment {
         // ActionBarDrawerToggle ties together the the proper interactions
         // between the navigation drawer and the action bar app icon.
         mDrawerToggle = new ActionBarDrawerToggle(
-                getActivity(),                    /* host Activity */
-                mDrawerLayout,                    /* DrawerLayout object */
-                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
-                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
-                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
-        ) {
+                getActivity(),
+                mDrawerLayout,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
+        )
+//        mDrawerToggle = new ActionBarDrawerToggle(
+//                getActivity(),                    /* host Activity */
+//                mDrawerLayout,                    /* DrawerLayout object */
+//                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+//                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+//                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+//        )
+        {
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
@@ -189,8 +196,19 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
+    protected void setCurrentItemFromBackstack(int position) {
+        mCurrentSelectedPosition = position;
+        if (mDrawerListView != null) {
+            mDrawerListView.setItemChecked(position, true);
+        }
+        if (mDrawerLayout != null && isDrawerOpen()) {
+            mDrawerLayout.closeDrawer(mFragmentContainerView);
+        }
+    }
+
     protected void selectItem(int position, boolean samenessMatters) {
-        boolean same = samenessMatters && position == mCurrentSelectedPosition;
+        int oldPosition = mCurrentSelectedPosition;
+        boolean same = samenessMatters && position == oldPosition;
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
@@ -199,7 +217,7 @@ public class NavigationDrawerFragment extends Fragment {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null && !same) {
-            mCallbacks.onNavigationDrawerItemSelected(position);
+            mCallbacks.onNavigationDrawerItemSelected(oldPosition, position);
         }
     }
 
@@ -273,7 +291,7 @@ public class NavigationDrawerFragment extends Fragment {
         /**
          * Called when an new item in the navigation drawer is selected.
          */
-        void onNavigationDrawerItemSelected(int position);
+        void onNavigationDrawerItemSelected(int oldPosition, int position);
     }
 
 
