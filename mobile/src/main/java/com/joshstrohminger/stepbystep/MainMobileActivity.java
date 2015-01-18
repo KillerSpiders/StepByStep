@@ -133,6 +133,11 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         getFragmentManager().beginTransaction().replace(R.id.container, fragment, fragment.getClass().getSimpleName()).commit();
     }
 
+    @Override
+    public void onSameNavigationDrawerItemSelected() {
+        restoreActionBar();
+    }
+
     public void onSectionAttached(String title) {
         mTitle = title;
         restoreActionBar();
@@ -150,6 +155,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             getMenuInflater().inflate(R.menu.main_mobile, menu);
+            restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);

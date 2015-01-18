@@ -198,8 +198,12 @@ public class NavigationDrawerFragment extends Fragment {
         if (mDrawerLayout != null && isDrawerOpen()) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
-        if (mCallbacks != null && !same) {
-            mCallbacks.onNavigationDrawerItemSelected(position);
+        if (mCallbacks != null) {
+            if(same) {
+                mCallbacks.onSameNavigationDrawerItemSelected();
+            } else {
+                mCallbacks.onNavigationDrawerItemSelected(position);
+            }
         }
     }
 
@@ -271,9 +275,14 @@ public class NavigationDrawerFragment extends Fragment {
      */
     public static interface NavigationDrawerCallbacks {
         /**
-         * Called when an item in the navigation drawer is selected.
+         * Called when an new item in the navigation drawer is selected.
          */
         void onNavigationDrawerItemSelected(int position);
+
+        /**
+         * Called when the same item in the navigation drawer is selected.
+         */
+        void onSameNavigationDrawerItemSelected();
     }
 
 
