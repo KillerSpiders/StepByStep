@@ -13,7 +13,9 @@ import android.support.v4.util.LruCache;
 import android.support.wearable.view.CardFragment;
 import android.support.wearable.view.FragmentGridPagerAdapter;
 import android.support.wearable.view.GridPagerAdapter;
+import android.support.wearable.view.GridViewPager;
 import android.util.Log;
+import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,31 +31,29 @@ public class SampleGridPagerAdapter extends FragmentGridPagerAdapter {
     private static final int TRANSITION_DURATION_MILLIS = 100;
 
     private final Context mContext;
+    private GridViewPager pager;
     private List<Row> mRows;
     private ColorDrawable mDefaultBg;
 
     private ColorDrawable mClearBg;
 
-    public SampleGridPagerAdapter(Context ctx, FragmentManager fm, String title, String subtitle, String[] instructions) {
+    public SampleGridPagerAdapter(Context ctx, FragmentManager fm, GridViewPager pager, String title, String subtitle, String[] instructions) {
         super(fm);
         mContext = ctx;
+        this.pager = pager;
 
         mRows = new ArrayList<>();
 
-        mRows.add(new Row(cardFragment(title, subtitle, false)));
+        mRows.add(new Row(cardFragment(ctx.getString(R.string.app_name), title)));
         for( int i = 0; i < instructions.length; ++i) {
-            mRows.add(new Row(cardFragment(String.valueOf(i+1), instructions[i], true)));
+            mRows.add(new Row(cardFragment((i+1) + " of " + instructions.length, instructions[i], R.drawable.ic_action_play)));
         }
+        mRows.add(new Row(cardFragment("Done", title)));
 
-//        mRows.add(new Row(cardFragment(R.string.welcome_title, R.string.welcome_text)));
 //        mRows.add(new Row(cardFragment(R.string.about_title, R.string.about_text)));
 //        mRows.add(new Row(
 //                cardFragment(R.string.cards_title, R.string.cards_text),
 //                cardFragment(R.string.expansion_title, R.string.expansion_text)));
-//        mRows.add(new Row(
-//                cardFragment(R.string.backgrounds_title, R.string.backgrounds_text),
-//                cardFragment(R.string.columns_title, R.string.columns_text)));
-//        mRows.add(new Row(cardFragment(R.string.dismiss_title, R.string.dismiss_text)));
 
         mDefaultBg = new ColorDrawable(R.color.dark_grey);
         mClearBg = new ColorDrawable(android.R.color.transparent);
@@ -102,13 +102,15 @@ public class SampleGridPagerAdapter extends FragmentGridPagerAdapter {
         }
     };
 
-    private Fragment cardFragment(String title, String text, boolean playable) {
-        Resources res = mContext.getResources();
-        CardFragment fragment = playable
-                ? CardFragment.create(title, text, R.drawable.ic_action_play)
-                : CardFragment.create(title, text);
-        // Add some extra bottom margin to leave room for the page indicator
-        fragment.setCardMarginBottom(res.getDimensionPixelSize(R.dimen.card_margin_bottom));
+    private Fragment cardFragment(String title, String text, int icon) {
+        CardFragment fragment = CardFragment.create(title, text, icon);
+        fragment.setCardMarginBottom(mContext.getResources().getDimensionPixelSize(R.dimen.card_margin_bottom));
+        return fragment;
+    }
+
+    private Fragment cardFragment(String title, String text) {
+        CardFragment fragment = CardFragment.create(title, text);
+        fragment.setCardMarginBottom(mContext.getResources().getDimensionPixelSize(R.dimen.card_margin_bottom));
         return fragment;
     }
 

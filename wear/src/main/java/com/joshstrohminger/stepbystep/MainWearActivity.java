@@ -1,26 +1,19 @@
 package com.joshstrohminger.stepbystep;
 
 import android.app.Activity;
-import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.view.ViewPager;
+import android.support.wearable.activity.ConfirmationActivity;
 import android.support.wearable.view.DotsPageIndicator;
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
-import android.util.AttributeSet;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -56,13 +49,13 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private View splashPanel;
     private View contentPanel;
     private GridViewPager pager;
+    private SampleGridPagerAdapter adapter;
     private MyPageListener myPageListener;
     private Handler mHandler;
 
     private Uri stepsUri;
     private Uri posUri;
     String nodeId;
-    Toast toast;
 
     private void setAppEnabled(final boolean enable) {
         runOnUiThread(new Runnable() {
@@ -105,17 +98,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                         // applied since this listener has taken them over.
                         pager.onApplyWindowInsets(insets);
                         return insets;
-                    }
-                });
-                toast = Toast.makeText(MainWearActivity.this, "starting", Toast.LENGTH_SHORT);
-                toast.show();
-                pager.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        toast.cancel();
-                        toast = Toast.makeText(MainWearActivity.this, "click " + pager.getCurrentItem().y, Toast.LENGTH_SHORT);
-                        toast.show();
-                        sendPosToMobile(pager.getCurrentItem().y - 1); // interpret as hitting the play button
                     }
                 });
             }
@@ -167,7 +149,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         getCurrentSteps();
     }
 
-    private void sendPosToMobile(int pos) {
+    protected void sendPosToMobile(int pos) {
         Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, DataLayerListenerService.POS_PATH, ByteBuffer.allocate(4).putInt(pos).array())
                 .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
                     @Override
@@ -242,7 +224,8 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 @Override
                 public void run() {
                     Log.d(TAG, "Populating wear steps...");
-                    pager.setAdapter(new SampleGridPagerAdapter(MainWearActivity.this, getFragmentManager(), title, subtitle, instructions));
+                    adapter = new SampleGridPagerAdapter(MainWearActivity.this, getFragmentManager(), pager, title, subtitle, instructions);
+                    pager.setAdapter(adapter);
                     final DotsPageIndicator dotsPageIndicator = (DotsPageIndicator) findViewById(R.id.page_indicator);
                     dotsPageIndicator.setPager(pager);
                     myPageListener = new MyPageListener(dotsPageIndicator);
@@ -265,7 +248,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 public void run() {
                     Log.d(TAG, "Setting pos to " + pos);
                     int newPos = 0; // default to title page
-                    if(pos >= 0 && pos < instructions.length) {
+                    if(pos >= 0 && pos <= instructions.length) {
                         // TODO: account for x, right now we're assuming it's always 0 since there is only a single column
                         newPos = pos + 1;
                     }
@@ -369,7 +352,27 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 sendPosToMobile(row - 1);
             }
             dontReportNextSelection = false;
+
+            // set onclick for the fragment, couldn't figure out where else to do it
+            View view = adapter.getFragment(row,column).getView();
+            if(view != null) {
+                view.setOnClickListener(fragmentClickListener);
+            }
+
+            if(row == adapter.getRowCount() - 1) {
+                Intent intent = new Intent(MainWearActivity.this, ConfirmationActivity.class);
+                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.SUCCESS_ANIMATION);
+                //intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "Done");
+                startActivity(intent);
+            }
         }
+
+        View.OnClickListener fragmentClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendPosToMobile(pager.getCurrentItem().y - 1);
+            }
+        };
 
         @Override
         public void onPageScrollStateChanged(int state) {
