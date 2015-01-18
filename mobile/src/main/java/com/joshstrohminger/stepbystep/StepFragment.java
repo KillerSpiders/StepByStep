@@ -83,59 +83,61 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         playPauseButton.setOnClickListener(this);
         skipButton.setOnClickListener(this);
 
-        speaker = new TextToSpeech(getActivity(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if(status == TextToSpeech.SUCCESS) {
-                    speaker.setLanguage(Locale.US);
-                    statusTextView.setText("Ready");
-                    ready = true;
-                    speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                        @Override
-                        public void onStart(final String utteranceId) {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    statusTextView.setText("Reading");
-                                    playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
-                                }
-                            });
-                        }
+        if(button.getVisibility() == View.INVISIBLE) {
+            speaker = new TextToSpeech(getActivity(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if (status == TextToSpeech.SUCCESS) {
+                        speaker.setLanguage(Locale.US);
+                        statusTextView.setText("Ready");
+                        ready = true;
+                        speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                            @Override
+                            public void onStart(final String utteranceId) {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        statusTextView.setText("Reading");
+                                        playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                                    }
+                                });
+                            }
 
-                        @Override
-                        public void onDone(String utteranceId) {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    listView.setEnabled(true);
-                                    statusTextView.setText("Paused");
-                                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
-                                }
-                            });
-                        }
+                            @Override
+                            public void onDone(String utteranceId) {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        listView.setEnabled(true);
+                                        statusTextView.setText("Paused");
+                                        playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                                    }
+                                });
+                            }
 
-                        @Override
-                        public void onError(String utteranceId) {
-                            Log.e(TAG, "Old error");
-                        }
+                            @Override
+                            public void onError(String utteranceId) {
+                                Log.e(TAG, "Old error");
+                            }
 
-                        @Override
-                        public void onError(String utteranceId, int errorCode) {
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    statusTextView.setText("Error");
-                                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
-                                }
-                            });
-                            super.onError(utteranceId, errorCode);
-                        }
-                    });
-                } else {
-                    statusTextView.setText("Forgot how to read");
+                            @Override
+                            public void onError(String utteranceId, int errorCode) {
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        statusTextView.setText("Error");
+                                        playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                                    }
+                                });
+                                super.onError(utteranceId, errorCode);
+                            }
+                        });
+                    } else {
+                        statusTextView.setText("Forgot how to read");
+                    }
                 }
-            }
-        });
+            });
+        }
 
         return rootView;
     }
@@ -167,14 +169,18 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
 
     @Override
     public void onPause() {
-        speaker.stop();
+        if(speaker != null) {
+            speaker.stop();
+        }
         ((MainMobileActivity)getActivity()).deleteAllDataItems();
         super.onPause();
     }
 
     @Override
     public void onDestroyView() {
-        speaker.shutdown();
+        if(speaker != null) {
+            speaker.shutdown();
+        }
         super.onDestroyView();
     }
 
