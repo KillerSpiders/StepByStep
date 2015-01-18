@@ -186,8 +186,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 if(dataItem != null) {
                     populateSteps(DataMapItem.fromDataItem(dataItem));
                     getCurrentPos();
-                } else {
-                    Toast.makeText(MainWearActivity.this, "no steps", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -200,8 +198,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 DataItem dataItem = dataItemResult.getDataItem();
                 if(dataItem != null) {
                     populateStepPosition(DataMapItem.fromDataItem(dataItem));
-                } else {
-                    Toast.makeText(MainWearActivity.this, "no pos", Toast.LENGTH_SHORT).show();
                 }
             }
         });

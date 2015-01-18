@@ -154,9 +154,12 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     protected void updatePos(int pos) {
         if(listView != null) {
             if(pos < 0 || pos >= instructions.length) {
+                if(pos == instructions.length) {
+                    play("That was the last step");
+                }
                 // uncheck
                 pos = listView.getCheckedItemPosition();
-                if(pos != AdapterView.INVALID_POSITION) {
+                if (pos != AdapterView.INVALID_POSITION) {
                     listView.setItemChecked(pos, false);
                 }
             } else {
@@ -167,14 +170,18 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         }
     }
 
+    private void play(String text) {
+        listView.setEnabled(false);
+        speaker.speak(text, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID_CLIP);
+    }
+
     private void play() {
         int pos = listView.getCheckedItemPosition();
         if(pos == AdapterView.INVALID_POSITION) {
             pos = 0;
             listView.setItemChecked(pos, true);
         }
-        listView.setEnabled(false);
-        speaker.speak(instructions[pos], TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID_CLIP);
+        play(instructions[pos]);
     }
 
     // skip to the next item and share with wear
