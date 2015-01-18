@@ -44,12 +44,12 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
 
     private GoogleApiClient mGoogleApiClient;
     private ListView listView;
-    private TextView mIntroText;
     private TextView titleTextView;
     private TextView subtitleTextView;
     private String title;
     private String subtitle;
     private String[] instructions;
+    private View splashPanel;
     private View contentPanel;
     private Handler mHandler;
 
@@ -61,7 +61,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mIntroText.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
+                splashPanel.setVisibility(enable ? View.INVISIBLE : View.VISIBLE);
                 contentPanel.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
             }
         });
@@ -78,7 +78,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 listView = (ListView) stub.findViewById(R.id.dataItem_list);
-                mIntroText = (TextView) stub.findViewById(R.id.intro);
+                splashPanel = stub.findViewById(R.id.splashPanel);
                 contentPanel = stub.findViewById(R.id.contentPanel);
                 titleTextView = (TextView) stub.findViewById(R.id.textViewTitle);
                 subtitleTextView = (TextView) stub.findViewById(R.id.textViewSubtitle);
@@ -169,13 +169,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     @Override
     public void onConnectionSuspended(int cause) {
         Log.d(TAG, "onConnectionSuspended(): Connection to Google API client was suspended");
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mIntroText.setVisibility(View.VISIBLE);
-                contentPanel.setVisibility(View.INVISIBLE);
-            }
-        });
+        setAppEnabled(false);
     }
 
     @Override
