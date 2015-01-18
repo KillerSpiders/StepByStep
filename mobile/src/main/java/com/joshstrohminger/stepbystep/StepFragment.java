@@ -44,6 +44,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
                 subtitle = steps[1];
                 instructions = Arrays.copyOfRange(steps, 2, steps.length);
                 ((MainMobileActivity)getActivity()).sendStepsToWearable(steps);
+                ((MainMobileActivity)getActivity()).sendStepsActiveFlagToWearable(true);
             }
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);
@@ -66,5 +67,26 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         ((MainMobileActivity)getActivity()).sendStepPositionToWearable(position);
+    }
+
+    @Override
+    public void onStop() {
+        ((MainMobileActivity)getActivity()).sendStepsActiveFlagToWearable(false);
+        super.onStop();
+    }
+
+    protected void updatePos(int pos) {
+        if(listView != null) {
+            if(pos < 0 || pos >= instructions.length) {
+                // uncheck
+                pos = listView.getCheckedItemPosition();
+                if(pos != AdapterView.INVALID_POSITION) {
+                    listView.setItemChecked(pos, false);
+                }
+            } else {
+                listView.setItemChecked(pos, true);
+                listView.smoothScrollToPosition(pos);
+            }
+        }
     }
 }

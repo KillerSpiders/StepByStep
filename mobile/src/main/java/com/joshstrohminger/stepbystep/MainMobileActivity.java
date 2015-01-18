@@ -20,7 +20,6 @@ import com.google.android.gms.common.data.FreezableUtils;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
@@ -29,14 +28,11 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 
 public class MainMobileActivity extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks, DataApi.DataListener,
@@ -52,6 +48,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private static final String STEPS_KEY = "steps";
     public static final String POS_PATH = "/pos";
     public static final String POS_KEY = "pos";
+    public static final String ACTIVE_PATH = "/active";
+    public static final String ACTIVE_KEY = "active";
 
     private GoogleApiClient mGoogleApiClient;
     private boolean mResolvingError = false;
@@ -133,7 +131,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             Log.e(TAG, "didn't find fragment class type");
             return;
         }
-        getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+        getFragmentManager().beginTransaction().replace(R.id.container, fragment, fragment.getClass().getSimpleName()).commit();
     }
 
     public void onSectionAttached(String title) {
@@ -207,6 +205,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
 
     @Override
     public void onPause() {
+        sendStepsActiveFlagToWearable(false);
         super.onPause();
     }
 
@@ -229,6 +228,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
+        sendStepsActiveFlagToWearable(false);
     }
 
     @Override //ConnectionCallbacks
@@ -283,15 +283,26 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
 
     @Override //MessageListener
     public void onMessageReceived(final MessageEvent messageEvent) {
-        Log.d(TAG, "onMessageReceived() A message from watch was received:" + messageEvent
-                .getRequestId() + " " + messageEvent.getPath());
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                // TODO: DO SOMETHING
-                //mDataItemListAdapter.add(new Event("Message from watch", messageEvent.toString()));
-            }
-        });
+        Log.d(TAG, "onMessageReceived() A message from watch was received:" + messageEvent.getRequestId() + " " + messageEvent.getPath());
+        switch(messageEvent.getPath()) {
+            case POS_PATH:
+                final int pos = ByteBuffer.wrap(messageEvent.getData()).getInt();
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Fragment fragment = getFragmentManager().findFragmentByTag(StepFragment.class.getSimpleName());
+                        if(fragment != null) {
+                            ((StepFragment)fragment).updatePos(pos);
+                        } else {
+                            Toast.makeText(MainMobileActivity.this, "received pos but couldn't get fragment", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                break;
+            default:
+                Log.e(TAG, "unexpected message");
+                break;
+        }
 
     }
 
@@ -360,6 +371,12 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         sendToWearable(dataMap, "steps");
     }
 
+    protected void sendStepsActiveFlagToWearable(boolean active) {
+        PutDataMapRequest dataMap = PutDataMapRequest.create(ACTIVE_PATH);
+        dataMap.getDataMap().putBoolean(ACTIVE_KEY, active);
+        sendToWearable(dataMap, "active flag");
+    }
+
     private void sendStartActivityMessage(String node) {
         Wearable.MessageApi.sendMessage(
                 mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
@@ -367,7 +384,9 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {
                         if (!sendMessageResult.getStatus().isSuccess()) {
-                            Log.e(TAG, "Failed to send message with status code: " + sendMessageResult.getStatus().getStatusCode());
+                            String message = "Failed to send message with status code: " + sendMessageResult.getStatus().getStatusCode();
+                            Log.e(TAG, message);
+                            Toast.makeText(MainMobileActivity.this, message, Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
