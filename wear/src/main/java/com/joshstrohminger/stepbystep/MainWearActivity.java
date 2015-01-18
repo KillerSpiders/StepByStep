@@ -55,7 +55,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
 
     private Uri stepsUri;
     private Uri posUri;
-    private Uri activeUri;
     String nodeId;
 
     private void setAppEnabled(final boolean enable) {
@@ -136,8 +135,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private void setupUris() {
         stepsUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.STEPS_PATH).build();
         posUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.POS_PATH).build();
-        activeUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.ACTIVE_PATH).build();
-        getCurrentActiveFlag();
         getCurrentSteps();
     }
 
@@ -216,20 +213,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         });
     }
 
-    private void getCurrentActiveFlag() {
-        Wearable.DataApi.getDataItem(mGoogleApiClient, activeUri).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                DataItem dataItem = dataItemResult.getDataItem();
-                if(dataItem != null) {
-                    populateActiveFlag(DataMapItem.fromDataItem(dataItem));
-                } else {
-                    Toast.makeText(MainWearActivity.this, "no active flag", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-    }
-
     private void populateSteps(DataMapItem dataMapItem) {
         final String[] steps = dataMapItem.getDataMap().getStringArray(DataLayerListenerService.STEPS_KEY);
         if(steps.length >= 3) {
@@ -246,11 +229,16 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                     listView.setAdapter(adapter);
                 }
             });
+            setAppEnabled(true);
         }
     }
 
     private void populateStepPosition(DataMapItem dataMapItem) {
         final int pos = dataMapItem.getDataMap().getInt(DataLayerListenerService.POS_KEY);
+        populateStepPosition(pos);
+    }
+
+    private void populateStepPosition(final int pos) {
         if(instructions != null) {
             mHandler.post(new Runnable() {
                 @Override
@@ -271,11 +259,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         }
     }
 
-    private void populateActiveFlag(DataMapItem dataMapItem) {
-        boolean active = dataMapItem.getDataMap().getBoolean(DataLayerListenerService.ACTIVE_KEY);
-        setAppEnabled(active);
-    }
-
     @Override
     public void onDataChanged(DataEventBuffer dataEvents) {
         Log.d(TAG, "onDataChanged(): " + dataEvents);
@@ -293,17 +276,23 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                     case DataLayerListenerService.POS_PATH:
                         populateStepPosition(DataMapItem.fromDataItem(dataItem));
                         break;
-                    case DataLayerListenerService.ACTIVE_PATH:
-                        populateActiveFlag(DataMapItem.fromDataItem(dataItem));
-                        break;
                     default:
                         Log.e(TAG, "Unrecognized path: " + path);
                         break;
                 }
             } else if (event.getType() == DataEvent.TYPE_DELETED) {
                 Log.d(TAG, "DataItem Deleted: " + event.getDataItem().toString());
-                if(event.getDataItem().getUri().getPath().equals(DataLayerListenerService.STEPS_PATH)) {
-                    setAppEnabled(false);
+                String path = event.getDataItem().getUri().getPath();
+                switch(path) {
+                    case DataLayerListenerService.STEPS_PATH:
+                        setAppEnabled(false);
+                        break;
+                    case DataLayerListenerService.POS_PATH:
+                        populateStepPosition(AdapterView.INVALID_POSITION);
+                        break;
+                    default:
+                        Log.w(TAG, "Unhandled deleted path");
+                        break;
                 }
             } else {
                 Log.e(TAG, "Unknown data event type: " + event.getType());
@@ -319,7 +308,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     @Override
     public void onPeerConnected(final Node node) {
         Log.d(TAG, "Node Connected: " + node.getId());
-        setAppEnabled(true);
         new Thread(new Runnable() {
             @Override
             public void run() {

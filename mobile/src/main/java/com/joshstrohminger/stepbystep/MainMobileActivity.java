@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.IntentSender;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,8 +49,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private static final String STEPS_KEY = "steps";
     public static final String POS_PATH = "/pos";
     public static final String POS_KEY = "pos";
-    public static final String ACTIVE_PATH = "/active";
-    public static final String ACTIVE_KEY = "active";
 
     private GoogleApiClient mGoogleApiClient;
     private boolean mResolvingError = false;
@@ -151,7 +150,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     public boolean onCreateOptionsMenu(Menu menu) {
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             getMenuInflater().inflate(R.menu.main_mobile, menu);
-            //restoreActionBar();
             return true;
         }
         return super.onCreateOptionsMenu(menu);
@@ -199,19 +197,9 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        sendStepsActiveFlagToWearable(false);
-        super.onPause();
-    }
-
-    @Override
     protected void onStop() {
         if (!mResolvingError) {
+            deleteAllDataItems();
             Wearable.DataApi.removeListener(mGoogleApiClient, this);
             Wearable.MessageApi.removeListener(mGoogleApiClient, this);
             Wearable.NodeApi.removeListener(mGoogleApiClient, this);
@@ -228,7 +216,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
-        sendStepsActiveFlagToWearable(false);
+        deleteAllDataItems();
     }
 
     @Override //ConnectionCallbacks
@@ -270,11 +258,9 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             public void run() {
                 for (DataEvent event : events) {
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
-                        // TODO: DO SOMETHING
-                        //mDataItemListAdapter.add( new Event("DataItem Changed", event.getDataItem().toString()));
+                        // TODO: Nobody else should be changing data right now so should we be worried about this?
                     } else if (event.getType() == DataEvent.TYPE_DELETED) {
-                        // TODO: DO SOMETHING
-                        //mDataItemListAdapter.add( new Event("DataItem Deleted", event.getDataItem().toString()));
+                        // TODO: Nobody else should be deleting data right now so should we be worried about this?
                     }
                 }
             }
@@ -312,8 +298,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                // TODO: DO SOMETHING
-                //mDataItemListAdapter.add(new Event("Connected", peer.toString()));
+                // TODO: don't care right know
             }
         });
 
@@ -325,8 +310,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                // TODO: DO SOMETHING
-                //mDataItemListAdapter.add(new Event("Disconnected", peer.toString()));
+                // TODO: don't care right know
             }
         });
     }
@@ -371,10 +355,24 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         sendToWearable(dataMap, "steps");
     }
 
-    protected void sendStepsActiveFlagToWearable(boolean active) {
-        PutDataMapRequest dataMap = PutDataMapRequest.create(ACTIVE_PATH);
-        dataMap.getDataMap().putBoolean(ACTIVE_KEY, active);
-        sendToWearable(dataMap, "active flag");
+    protected void deleteAllDataItems() {
+        deleteDataItem(POS_PATH);
+        deleteDataItem(STEPS_PATH);
+    }
+
+    protected void deleteDataItem(final String path) {
+        Uri uri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).path(path).build();
+        Log.d(TAG, "URI for delete: " + uri);
+        Wearable.DataApi.deleteDataItems(mGoogleApiClient, uri).setResultCallback(new ResultCallback<DataApi.DeleteDataItemsResult>() {
+            @Override
+            public void onResult(DataApi.DeleteDataItemsResult deleteDataItemsResult) {
+                if(!deleteDataItemsResult.getStatus().isSuccess()) {
+                    String message = "Failed to delete path " + path + " - error: " + deleteDataItemsResult.getStatus().getStatusCode() + " - " + deleteDataItemsResult.getStatus().getStatusMessage();
+                    Log.e(TAG, message);
+                    Toast.makeText(MainMobileActivity.this, message, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void sendStartActivityMessage(String node) {

@@ -44,7 +44,6 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
                 subtitle = steps[1];
                 instructions = Arrays.copyOfRange(steps, 2, steps.length);
                 ((MainMobileActivity)getActivity()).sendStepsToWearable(steps);
-                ((MainMobileActivity)getActivity()).sendStepsActiveFlagToWearable(true);
             }
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);
@@ -71,7 +70,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
 
     @Override
     public void onStop() {
-        ((MainMobileActivity)getActivity()).sendStepsActiveFlagToWearable(false);
+        ((MainMobileActivity)getActivity()).deleteAllDataItems();
         super.onStop();
     }
 

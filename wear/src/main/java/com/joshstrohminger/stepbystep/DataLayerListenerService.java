@@ -22,13 +22,10 @@ public class DataLayerListenerService extends WearableListenerService {
     private static final String TAG = DataLayerListenerService.class.getSimpleName();
 
     private static final String START_ACTIVITY_PATH = "/start-activity";
-    private static final String DATA_ITEM_RECEIVED_PATH = "/data-item-received";
     public static final String STEPS_PATH = "/steps";
     public static final String STEPS_KEY = "steps";
     public static final String POS_PATH = "/pos";
     public static final String POS_KEY = "pos";
-    public static final String ACTIVE_PATH = "/active";
-    public static final String ACTIVE_KEY = "active";
     GoogleApiClient mGoogleApiClient;
 
     @Override
