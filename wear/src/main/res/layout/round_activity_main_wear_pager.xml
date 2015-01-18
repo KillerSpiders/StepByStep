@@ -9,37 +9,27 @@
     tools:context=".MainWearActivity"
     tools:deviceIds="wear_round">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:layout_height="match_parent"
         android:id="@+id/contentPanel"
         tools:visibility="visible"
-        android:visibility="invisible">
+        android:visibility="invisible" >
 
-        <TextView
+        <android.support.wearable.view.GridViewPager
+            android:id="@+id/pager"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            tools:text="Title"
-            android:gravity="center"
-            android:id="@+id/textViewTitle"/>
+            android:layout_height="match_parent"
+            android:keepScreenOn="true" />
 
-        <TextView
-            android:layout_width="match_parent"
+        <android.support.wearable.view.DotsPageIndicator
+            android:id="@+id/page_indicator"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="Subtitle"
-            android:gravity="center"
-            android:id="@+id/textViewSubtitle"/>
+            android:layout_gravity="center_horizontal|bottom">
+        </android.support.wearable.view.DotsPageIndicator>
 
-        <ListView
-            android:id="@+id/dataItem_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            tools:listitem="@android:layout/simple_list_item_single_choice"
-            android:choiceMode="singleChoice"/>
-
-    </LinearLayout>
+    </FrameLayout>
 
     <RelativeLayout
         android:id="@+id/splashPanel"
