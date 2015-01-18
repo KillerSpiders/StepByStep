@@ -60,7 +60,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             new FragmentMap(R.string.action_home, HomeFragment.class)
             ,new FragmentMap(R.string.action_my_steps, MyStepsFragment.class)
             ,new FragmentMap(R.string.action_step, StepFragment.class)
-            ,new FragmentMap(R.string.action_get_steps, GetStepsFragment.class)
+            //,new FragmentMap(R.string.action_get_steps, GetStepsFragment.class)
             //,new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
 
