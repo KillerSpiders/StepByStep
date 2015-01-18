@@ -186,6 +186,9 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
 
     protected void updatePos(int pos) {
         if(listView != null) {
+            if(speaker != null && speaker.isSpeaking()) {
+                speaker.stop();
+            }
             if(pos < 0 || pos >= instructions.length) {
                 if(pos == instructions.length) {
                     play("That was the last step");
