@@ -2,14 +2,20 @@ package com.joshstrohminger.stepbystep;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.ViewPager;
+import android.support.wearable.view.DotsPageIndicator;
+import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -43,19 +49,18 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private static final String TAG = MainWearActivity.class.getSimpleName();
 
     private GoogleApiClient mGoogleApiClient;
-    private ListView listView;
-    private TextView titleTextView;
-    private TextView subtitleTextView;
     private String title;
     private String subtitle;
     private String[] instructions;
     private View splashPanel;
     private View contentPanel;
+    private GridViewPager pager;
     private Handler mHandler;
 
     private Uri stepsUri;
     private Uri posUri;
     String nodeId;
+    Toast toast;
 
     private void setAppEnabled(final boolean enable) {
         runOnUiThread(new Runnable() {
@@ -72,21 +77,84 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         super.onCreate(savedInstanceState);
         mHandler = new Handler();
         Log.d(TAG, "onCreate");
-        setContentView(R.layout.activity_main_wear);
+        setContentView(R.layout.activity_main_wear_pager);
         final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
-                listView = (ListView) stub.findViewById(R.id.dataItem_list);
                 splashPanel = stub.findViewById(R.id.splashPanel);
                 contentPanel = stub.findViewById(R.id.contentPanel);
-                titleTextView = (TextView) stub.findViewById(R.id.textViewTitle);
-                subtitleTextView = (TextView) stub.findViewById(R.id.textViewSubtitle);
+                pager = (GridViewPager) findViewById(R.id.pager);
 
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                final Resources res = getResources();
+                pager.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
                     @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        sendPosToMobile(position);
+                    public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+                        // Adjust page margins:
+                        //   A little extra horizontal spacing between pages looks a bit
+                        //   less crowded on a round display.
+                        final boolean round = insets.isRound();
+                        int rowMargin = res.getDimensionPixelOffset(R.dimen.page_row_margin);
+                        int colMargin = res.getDimensionPixelOffset(round ? R.dimen.page_column_margin_round : R.dimen.page_column_margin);
+                        pager.setPageMargins(rowMargin, colMargin);
+
+                        // GridViewPager relies on insets to properly handle
+                        // layout for round displays. They must be explicitly
+                        // applied since this listener has taken them over.
+                        pager.onApplyWindowInsets(insets);
+                        return insets;
+                    }
+                });
+                toast = Toast.makeText(MainWearActivity.this, "starting", Toast.LENGTH_SHORT);
+                toast.show();
+                pager.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        toast.cancel();
+                        toast = Toast.makeText(MainWearActivity.this, "click " + pager.getCurrentItem().y, Toast.LENGTH_SHORT);
+                        toast.show();
+                        sendPosToMobile(pager.getCurrentItem().y-1); // interpret as hitting the play button
+                    }
+                });
+                pager.setOnPageChangeListener(new GridViewPager.OnPageChangeListener() {
+                    @Override
+                    public void onPageScrolled(int i, int i2, float v, float v2, int i3, int i4) {
+
+                    }
+
+                    @Override
+                    public void onPageSelected(int i, int i2) {
+                        toast.cancel();
+                        toast = Toast.makeText(MainWearActivity.this, "sel " + i + "," + i2, Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+
+                    @Override
+                    public void onPageScrollStateChanged(int state) {
+                        toast.cancel();
+                        String name;
+                        switch(state) {
+                            case GridViewPager.SCROLL_STATE_CONTENT_SETTLING:
+                                name = "conset";
+                                break;
+                            case GridViewPager.SCROLL_STATE_DRAGGING:
+                                name = "drag";
+                                break;
+                            case GridViewPager.SCROLL_STATE_IDLE:
+                                name = "idle";
+                                break;
+                            case GridViewPager.SCROLL_STATE_SETTLING:
+                                name = "settling";
+                                break;
+                            default:
+                                name = String.valueOf(state);
+                        }
+                        toast = Toast.makeText(MainWearActivity.this, "state " + name, Toast.LENGTH_SHORT);
+                        toast.show();
+                        // only update mobile when the scrolling stops
+                        if(state == GridViewPager.SCROLL_STATE_IDLE) {
+                            sendPosToMobile(pager.getCurrentItem().y-1);
+                        }
                     }
                 });
             }
@@ -213,10 +281,9 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 @Override
                 public void run() {
                     Log.d(TAG, "Populating wear steps...");
-                    titleTextView.setText(title);
-                    subtitleTextView.setText(subtitle);
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(MainWearActivity.this, android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
-                    listView.setAdapter(adapter);
+                    pager.setAdapter(new SampleGridPagerAdapter(MainWearActivity.this, getFragmentManager(), title, subtitle, instructions));
+                    DotsPageIndicator dotsPageIndicator = (DotsPageIndicator) findViewById(R.id.page_indicator);
+                    dotsPageIndicator.setPager(pager);
                 }
             });
             setAppEnabled(true);
@@ -235,14 +302,11 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 public void run() {
                     Log.d(TAG, "Setting pos to " + pos);
                     if(pos < 0 || pos >= instructions.length) {
-                        // uncheck
-                        int oldPos = listView.getCheckedItemPosition();
-                        if(oldPos != AdapterView.INVALID_POSITION) {
-                            listView.setItemChecked(oldPos, false);
-                        }
+                        // go to title page
+                        pager.setCurrentItem(0, 0);
                     } else {
-                        listView.setItemChecked(pos, true);
-                        listView.smoothScrollToPosition(pos);
+                        // TODO: account for x, right now we're assuming it's always 0 since there is only a single column
+                        pager.setCurrentItem(pos+1, 0); // +1 to account for the title row
                     }
                 }
             });
