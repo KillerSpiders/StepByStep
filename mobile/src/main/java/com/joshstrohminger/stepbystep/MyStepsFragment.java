@@ -13,15 +13,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyStepsFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private List<StepsHolder> data;
 
     private final int[] defaultIds = new int[]{
-            R.array.steps_paper_airplane,
-            R.array.steps_stand_on_one_foot
+            R.array.default_paper_airplane,
+            R.array.default_stand_on_one_foot,
+            R.array.default_paper_cat
     };
 
     public MyStepsFragment() {
@@ -57,9 +60,11 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         data = new ArrayList<>();
 
         // use default instructions
+        int[] parts;
         String[] steps;
         for( int id : defaultIds) {
-            steps = getResources().getStringArray(id);
+            parts = getResources().getIntArray(id);
+            steps = getResources().getStringArray(parts[0]);
             if( steps.length >= 3) {
                 data.add(new StepsHolder(id, steps[0], steps[1]));
             }

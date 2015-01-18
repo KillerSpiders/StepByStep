@@ -2,17 +2,13 @@
 <resources>
     
     <string-array name="steps_paper_airplane">
-        <item>How to fold a paper airplane</item>
-        <item>Just some dude</item>
-        <item>Place on desk in portrait orientation.</item>
-        <item>Fold the top-right corner half way across the paper from right to left.</item>
-        <item>Fold the top-left corner half way across the paper from left to right.</item>
-        <item>Fold the middle-right corner half way across the paper from right to left.</item>
-        <item>Fold the middle-left corner half way across the paper from left to right.</item>
-        <item>Fold the whole paper in half with the flaps on the inside.</item>
-        <item>Fold the outer-left flap back at a 90\u00B0 angle to create the left wing.</item>
-        <item>Fold the outer-right flap back at a 90\u00B0 angle to create the right wing.</item>
-        <item>Throw.</item>
+        <item>Paper Airplane</item>
+        <item>createivewithkids.com</item>
+        <item>Fold paper in half long-ways.</item>
+        <item>Fold in corners.</item>
+        <item>Fold bent corners in to center.</item>
+        <item>Fold in half.</item>
+        <item>Fold wings down.</item>
     </string-array>
 
     <string-array name="steps_stand_on_one_foot">
@@ -22,5 +18,40 @@
         <item>Lift one foot into the air.</item>
         <item>Wait for an unspecified amount of time.</item>
     </string-array>
+
+    <string-array name="steps_paper_cat">
+        <item>Paper Cat</item>
+        <item>Fumiaki Shingu</item>
+        <item>Fold a square piece of paper in half.</item>
+        <item>Fold in half to make a crease.</item>
+        <item>Fold in along the dotted line.</item>
+        <item>Fold in along the dotted lines.</item>
+        <item>Turn over.</item>
+        <item>Draw a cat face.</item>
+    </string-array>
+
+    <integer-array name="default_paper_airplane">
+        <item>@array/steps_paper_airplane</item>
+        <item>0</item>
+        <item>@drawable/steps_paper_airplane_0_1</item>
+        <item>1</item>
+        <item>@drawable/steps_paper_airplane_1_1</item>
+        <item>2</item>
+        <item>@drawable/steps_paper_airplane_2_1</item>
+        <item>3</item>
+        <item>@drawable/steps_paper_airplane_3_1</item>
+        <item>4</item>
+        <item>@drawable/steps_paper_airplane_4_1</item>
+        <item>5</item>
+        <item>@drawable/steps_paper_airplane_5_1</item>
+    </integer-array>
+
+    <integer-array name="default_stand_on_one_foot">
+        <item>@array/steps_stand_on_one_foot</item>
+    </integer-array>
+
+    <integer-array name="default_paper_cat">
+        <item>@array/steps_paper_cat</item>
+    </integer-array>
     
 </resources>

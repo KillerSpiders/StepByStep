@@ -32,6 +32,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     ImageButton skipButton;
     private ListView listView;
     private String[] steps;
+    private int partsId;
     private int stepsId;
 
     private String[] instructions = new String[] {};
@@ -51,8 +52,9 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         Button button = (Button) rootView.findViewById(R.id.button);
         TextView titleTextView = (TextView) rootView.findViewById(R.id.textViewTitle);
         TextView subtitleTextView = (TextView) rootView.findViewById(R.id.textViewSubtitle);
-        stepsId = getArguments().getInt(ARG_STEPS_ID);
-        if(stepsId > 0) {
+        partsId = getArguments().getInt(ARG_STEPS_ID);
+        if(partsId > 0) {
+            stepsId = getResources().getIntArray(partsId)[0];
             steps = getResources().getStringArray(stepsId);
             if (steps.length >= 3) {
                 titleTextView.setText(steps[0]);

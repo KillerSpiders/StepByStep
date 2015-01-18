@@ -341,7 +341,6 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     public void showConfirmation() {
         Intent intent = new Intent(this, ConfirmationActivity.class);
         intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.SUCCESS_ANIMATION);
-        //intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "Done");
         startActivity(intent);
     }
 
