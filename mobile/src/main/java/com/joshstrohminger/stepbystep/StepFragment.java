@@ -3,20 +3,32 @@ package com.joshstrohminger.stepbystep;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.Arrays;
+import java.util.Locale;
 
-public class StepFragment extends Fragment implements AdapterView.OnItemClickListener {
+public class StepFragment extends Fragment implements AdapterView.OnItemClickListener, View.OnClickListener {
 
     private static final String ARG_STEPS_ID = "arg_steps_id";
+    private static final String TAG = StepFragment.class.getSimpleName();
+    private static final String UTTERANCE_ID_CLIP = "CLIP";
 
+    boolean ready = false;
+    TextToSpeech speaker;
+    TextView statusTextView;
+    ImageButton playPauseButton;
+    ImageButton skipButton;
     private ListView listView;
     private int stepsId;
     private String title = "Please select some steps";
@@ -48,12 +60,75 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);
         }
+        statusTextView = (TextView) rootView.findViewById(R.id.statusTextView);
+        playPauseButton = (ImageButton) rootView.findViewById(R.id.playPauseButton);
+        skipButton = (ImageButton) rootView.findViewById(R.id.skipButton);
         listView = (ListView) rootView.findViewById(R.id.listView);
         ((TextView) rootView.findViewById(R.id.textViewTitle)).setText(title);
         ((TextView) rootView.findViewById(R.id.textViewSubtitle)).setText(subtitle);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_single_choice, android.R.id.text1, instructions);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
+
+        statusTextView.setText("Starting...");
+        playPauseButton.setOnClickListener(this);
+        skipButton.setOnClickListener(this);
+
+        speaker = new TextToSpeech(getActivity(), new TextToSpeech.OnInitListener() {
+
+            @Override
+            public void onInit(int status) {
+                if(status == TextToSpeech.SUCCESS) {
+                    speaker.setLanguage(Locale.US);
+                    statusTextView.setText("Ready");
+                    ready = true;
+                    speaker.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                        @Override
+                        public void onStart(final String utteranceId) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    statusTextView.setText("Reading");
+                                    playPauseButton.setImageResource(android.R.drawable.ic_media_pause);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onDone(String utteranceId) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    listView.setEnabled(true);
+                                    statusTextView.setText("Paused");
+                                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onError(String utteranceId) {
+                            Log.e(TAG, "Old error");
+                        }
+
+                        @Override
+                        public void onError(String utteranceId, int errorCode) {
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    statusTextView.setText("Error");
+                                    playPauseButton.setImageResource(android.R.drawable.ic_media_play);
+                                }
+                            });
+                            super.onError(utteranceId, errorCode);
+                        }
+                    });
+                } else {
+                    statusTextView.setText("Forgot how to read");
+                }
+            }
+        });
+
         return rootView;
     }
 
@@ -71,6 +146,8 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     @Override
     public void onStop() {
         ((MainMobileActivity)getActivity()).deleteAllDataItems();
+        speaker.stop();
+        speaker.shutdown();
         super.onStop();
     }
 
@@ -85,7 +162,57 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
             } else {
                 listView.setItemChecked(pos, true);
                 listView.smoothScrollToPosition(pos);
+                play();
             }
+        }
+    }
+
+    private void play() {
+        int pos = listView.getCheckedItemPosition();
+        if(pos == AdapterView.INVALID_POSITION) {
+            pos = 0;
+            listView.setItemChecked(pos, true);
+        }
+        listView.setEnabled(false);
+        speaker.speak(instructions[pos], TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID_CLIP);
+    }
+
+    // skip to the next item and share with wear
+    private void skip() {
+
+        if(speaker.isSpeaking()) {
+            speaker.stop();
+        }
+
+        int pos = listView.getCheckedItemPosition();
+        if( pos == AdapterView.INVALID_POSITION) {
+            pos = 0;
+        } else {
+            ++pos;
+        }
+        updatePos(pos);
+        ((MainMobileActivity)getActivity()).sendStepPositionToWearable(listView.getCheckedItemPosition());
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch(v.getId()) {
+            case R.id.playPauseButton:
+                if(ready) {
+                    if(speaker.isSpeaking()) {
+                        listView.setEnabled(true);
+                        speaker.stop();
+                    } else {
+                        play();
+                    }
+                }
+                break;
+            case R.id.skipButton:
+                skip();
+                break;
+            default:
+                Log.e(TAG, "Failed to handle click");
+                break;
         }
     }
 }
