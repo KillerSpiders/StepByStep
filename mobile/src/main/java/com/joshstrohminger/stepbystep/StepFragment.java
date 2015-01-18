@@ -30,6 +30,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     ImageButton playPauseButton;
     ImageButton skipButton;
     private ListView listView;
+    private String[] steps;
     private int stepsId;
     private String title = "Please select some steps";
     private String subtitle = "so they'll show up here";
@@ -50,12 +51,11 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         View rootView = inflater.inflate(R.layout.fragment_step, container, false);
         stepsId = getArguments().getInt(ARG_STEPS_ID);
         if(stepsId > 0) {
-            String[] steps = getResources().getStringArray(stepsId);
+            steps = getResources().getStringArray(stepsId);
             if (steps.length >= 3) {
                 title = steps[0];
                 subtitle = steps[1];
                 instructions = Arrays.copyOfRange(steps, 2, steps.length);
-                ((MainMobileActivity)getActivity()).sendStepsToWearable(steps);
             }
         } else {
             rootView.findViewById(R.id.controlPanel).setVisibility(View.INVISIBLE);
@@ -75,7 +75,6 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         skipButton.setOnClickListener(this);
 
         speaker = new TextToSpeech(getActivity(), new TextToSpeech.OnInitListener() {
-
             @Override
             public void onInit(int status) {
                 if(status == TextToSpeech.SUCCESS) {
@@ -133,6 +132,19 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if(steps != null) {
+            ((MainMobileActivity) getActivity()).sendStepsToWearable(steps);
+        }
+        int pos = listView.getCheckedItemPosition();
+        if(pos != AdapterView.INVALID_POSITION) {
+            ((MainMobileActivity) getActivity()).sendStepPositionToWearable(pos);
+        }
+        listView.setEnabled(true);
+    }
+
+    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
@@ -145,11 +157,16 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     }
 
     @Override
-    public void onStop() {
-        ((MainMobileActivity)getActivity()).deleteAllDataItems();
+    public void onPause() {
         speaker.stop();
+        ((MainMobileActivity)getActivity()).deleteAllDataItems();
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
         speaker.shutdown();
-        super.onStop();
+        super.onDestroy();
     }
 
     protected void updatePos(int pos) {

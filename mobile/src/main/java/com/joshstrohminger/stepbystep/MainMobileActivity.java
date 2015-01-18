@@ -216,7 +216,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
-        deleteAllDataItems();
+        //deleteAllDataItems();
     }
 
     @Override //ConnectionCallbacks
