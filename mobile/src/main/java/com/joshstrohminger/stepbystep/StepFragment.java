@@ -163,6 +163,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
                 if (pos != AdapterView.INVALID_POSITION) {
                     listView.setItemChecked(pos, false);
                 }
+                statusTextView.setText("Done/Ready");
             } else {
                 listView.setItemChecked(pos, true);
                 listView.smoothScrollToPosition(pos);
