@@ -51,9 +51,14 @@ public class HomeFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        ((MainMobileActivity) getActivity()).deleteAllDataItems();
+    }
+
+    @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
-        ((MainMobileActivity) activity).deleteAllDataItems();
     }
 }

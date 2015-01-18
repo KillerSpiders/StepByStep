@@ -108,7 +108,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        listView.setEnabled(true);
+                                        //listView.setEnabled(true);
                                         statusTextView.setText("Paused");
                                         playPauseButton.setImageResource(android.R.drawable.ic_media_play);
                                     }
@@ -152,7 +152,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         if(pos != AdapterView.INVALID_POSITION) {
             ((MainMobileActivity) getActivity()).sendStepPositionToWearable(pos);
         }
-        listView.setEnabled(true);
+        //listView.setEnabled(true);
     }
 
     @Override
@@ -164,6 +164,9 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         ((MainMobileActivity)getActivity()).sendStepPositionToWearable(position);
+        if(speaker != null && speaker.isSpeaking()) {
+            speaker.stop();
+        }
         play();
     }
 
@@ -211,7 +214,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     }
 
     private void play(String text) {
-        listView.setEnabled(false);
+        //listView.setEnabled(false);
         speaker.speak(text, TextToSpeech.QUEUE_ADD, null, UTTERANCE_ID_CLIP);
     }
 
@@ -251,7 +254,7 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
             case R.id.playPauseButton:
                 if(ready) {
                     if(speaker.isSpeaking()) {
-                        listView.setEnabled(true);
+                        //listView.setEnabled(true);
                         speaker.stop();
                     } else {
                         play();

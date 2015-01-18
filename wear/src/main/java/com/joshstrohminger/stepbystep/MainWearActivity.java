@@ -254,12 +254,10 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                         // TODO: account for x, right now we're assuming it's always 0 since there is only a single column
                         newPos = pos + 1;
                     }
-                    if(pager.getCurrentItem().y != newPos) {
-                        if(myPageListener != null) {
-                            myPageListener.setDontReportNextSelection(true);
-                        }
-                        pager.setCurrentItem(newPos, 0);
+                    if(myPageListener != null) {
+                        myPageListener.setDontReportNextSelection(true);
                     }
+                    pager.setCurrentItem(newPos, 0);
                 }
             });
         }
