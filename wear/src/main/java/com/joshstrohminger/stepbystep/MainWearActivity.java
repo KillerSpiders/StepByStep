@@ -33,8 +33,11 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MainWearActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener, MessageApi.MessageListener,
@@ -53,9 +56,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private MyPageListener myPageListener;
     private Handler mHandler;
 
-    private Uri stepsUri;
-    private Uri posUri;
-    String nodeId;
+    Set<String> nodeIds = new HashSet<>();
 
     private void setAppEnabled(final boolean enable) {
         runOnUiThread(new Runnable() {
@@ -135,46 +136,49 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         new Thread(new Runnable() {
             @Override
             public void run() {
-                nodeId = getRemoteNodeId();
-                if(nodeId != null) {
+                getRemoteNodeIds();
+                if(!nodeIds.isEmpty()) {
                     setupUris();
                 }
             }
         }).start();
     }
 
+    private Uri buildUri(String nodeId, String path) {
+        return new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(path).build();
+    }
+
     private void setupUris() {
-        stepsUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.STEPS_PATH).build();
-        posUri = new Uri.Builder().scheme(PutDataRequest.WEAR_URI_SCHEME).authority(nodeId).path(DataLayerListenerService.POS_PATH).build();
         getCurrentSteps();
     }
 
     protected void sendPosToMobile(int pos) {
-        Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, DataLayerListenerService.POS_PATH, ByteBuffer.allocate(4).putInt(pos).array())
-                .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-                    @Override
-                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                        if (!sendMessageResult.getStatus().isSuccess()) {
-                            String message = "Failed to send pos message with status code: " + sendMessageResult.getStatus().getStatusCode();
-                            Log.e(TAG, message);
-                            Toast.makeText(MainWearActivity.this, message, Toast.LENGTH_SHORT).show();
+        for(String nodeId : nodeIds) {
+            Wearable.MessageApi.sendMessage(mGoogleApiClient, nodeId, DataLayerListenerService.POS_PATH, ByteBuffer.allocate(4).putInt(pos).array())
+                    .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                        @Override
+                        public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                            if (!sendMessageResult.getStatus().isSuccess()) {
+                                String message = "Failed to send pos message with status code: " + sendMessageResult.getStatus().getStatusCode();
+                                Log.e(TAG, message);
+                                Toast.makeText(MainWearActivity.this, message, Toast.LENGTH_SHORT).show();
+                            }
                         }
-                    }
-                });
-    }
-
-    private String getLocalNodeId() {
-        NodeApi.GetLocalNodeResult nodeResult = Wearable.NodeApi.getLocalNode(mGoogleApiClient).await();
-        return nodeResult.getNode().getId();
-    }
-
-    private String getRemoteNodeId() {
-        NodeApi.GetConnectedNodesResult nodesResult = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
-        List<Node> nodes = nodesResult.getNodes();
-        if (nodes.size() > 0) {
-            return nodes.get(0).getId();
+                    });
         }
-        return null;
+    }
+
+//    private String getLocalNodeId() {
+//        NodeApi.GetLocalNodeResult nodeResult = Wearable.NodeApi.getLocalNode(mGoogleApiClient).await();
+//        return nodeResult.getNode().getId();
+//    }
+
+    private void getRemoteNodeIds() {
+        NodeApi.GetConnectedNodesResult nodesResult = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+        nodeIds.clear();
+        for( Node node : nodesResult.getNodes()) {
+            nodeIds.add(node.getId());
+        }
     }
 
     @Override
@@ -190,28 +194,32 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     }
 
     private void getCurrentSteps() {
-        Wearable.DataApi.getDataItem(mGoogleApiClient, stepsUri).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                DataItem dataItem = dataItemResult.getDataItem();
-                if(dataItem != null) {
-                    populateSteps(DataMapItem.fromDataItem(dataItem));
-                    getCurrentPos();
+        if(!nodeIds.isEmpty()) {
+            Wearable.DataApi.getDataItem(mGoogleApiClient, buildUri(nodeIds.iterator().next(),DataLayerListenerService.STEPS_PATH)).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                @Override
+                public void onResult(DataApi.DataItemResult dataItemResult) {
+                    DataItem dataItem = dataItemResult.getDataItem();
+                    if (dataItem != null) {
+                        populateSteps(DataMapItem.fromDataItem(dataItem));
+                        getCurrentPos();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void getCurrentPos() {
-        Wearable.DataApi.getDataItem(mGoogleApiClient, posUri).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-            @Override
-            public void onResult(DataApi.DataItemResult dataItemResult) {
-                DataItem dataItem = dataItemResult.getDataItem();
-                if(dataItem != null) {
-                    populateStepPosition(DataMapItem.fromDataItem(dataItem), true);
+        if(!nodeIds.isEmpty()) {
+            Wearable.DataApi.getDataItem(mGoogleApiClient, buildUri(nodeIds.iterator().next(), DataLayerListenerService.POS_PATH)).setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                @Override
+                public void onResult(DataApi.DataItemResult dataItemResult) {
+                    DataItem dataItem = dataItemResult.getDataItem();
+                    if (dataItem != null) {
+                        populateStepPosition(DataMapItem.fromDataItem(dataItem), true);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private void populateSteps(DataMapItem dataMapItem) {
@@ -315,7 +323,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         new Thread(new Runnable() {
             @Override
             public void run() {
-                nodeId = node.getId();
+                nodeIds.add(node.getId());
                 setupUris();
             }
         }).start();
@@ -324,7 +332,10 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     @Override
     public void onPeerDisconnected(Node node) {
         Log.d(TAG, "Node Disconnected: " + node.getId());
-        setAppEnabled(false);
+        nodeIds.remove(node.getId());
+        if(nodeIds.isEmpty()) {
+            setAppEnabled(false);
+        }
     }
 
     public void showConfirmation() {
