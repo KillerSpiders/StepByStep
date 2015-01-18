@@ -11,6 +11,7 @@ import android.support.v4.view.ViewPager;
 import android.support.wearable.view.DotsPageIndicator;
 import android.support.wearable.view.GridViewPager;
 import android.support.wearable.view.WatchViewStub;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,6 +56,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     private View splashPanel;
     private View contentPanel;
     private GridViewPager pager;
+    private MyPageListener myPageListener;
     private Handler mHandler;
 
     private Uri stepsUri;
@@ -113,48 +115,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                         toast.cancel();
                         toast = Toast.makeText(MainWearActivity.this, "click " + pager.getCurrentItem().y, Toast.LENGTH_SHORT);
                         toast.show();
-                        sendPosToMobile(pager.getCurrentItem().y-1); // interpret as hitting the play button
-                    }
-                });
-                pager.setOnPageChangeListener(new GridViewPager.OnPageChangeListener() {
-                    @Override
-                    public void onPageScrolled(int i, int i2, float v, float v2, int i3, int i4) {
-
-                    }
-
-                    @Override
-                    public void onPageSelected(int i, int i2) {
-                        toast.cancel();
-                        toast = Toast.makeText(MainWearActivity.this, "sel " + i + "," + i2, Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-
-                    @Override
-                    public void onPageScrollStateChanged(int state) {
-                        toast.cancel();
-                        String name;
-                        switch(state) {
-                            case GridViewPager.SCROLL_STATE_CONTENT_SETTLING:
-                                name = "conset";
-                                break;
-                            case GridViewPager.SCROLL_STATE_DRAGGING:
-                                name = "drag";
-                                break;
-                            case GridViewPager.SCROLL_STATE_IDLE:
-                                name = "idle";
-                                break;
-                            case GridViewPager.SCROLL_STATE_SETTLING:
-                                name = "settling";
-                                break;
-                            default:
-                                name = String.valueOf(state);
-                        }
-                        toast = Toast.makeText(MainWearActivity.this, "state " + name, Toast.LENGTH_SHORT);
-                        toast.show();
-                        // only update mobile when the scrolling stops
-                        if(state == GridViewPager.SCROLL_STATE_IDLE) {
-                            sendPosToMobile(pager.getCurrentItem().y-1);
-                        }
+                        sendPosToMobile(pager.getCurrentItem().y - 1); // interpret as hitting the play button
                     }
                 });
             }
@@ -282,8 +243,10 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 public void run() {
                     Log.d(TAG, "Populating wear steps...");
                     pager.setAdapter(new SampleGridPagerAdapter(MainWearActivity.this, getFragmentManager(), title, subtitle, instructions));
-                    DotsPageIndicator dotsPageIndicator = (DotsPageIndicator) findViewById(R.id.page_indicator);
+                    final DotsPageIndicator dotsPageIndicator = (DotsPageIndicator) findViewById(R.id.page_indicator);
                     dotsPageIndicator.setPager(pager);
+                    myPageListener = new MyPageListener(dotsPageIndicator);
+                    pager.setOnPageChangeListener(myPageListener);
                 }
             });
             setAppEnabled(true);
@@ -301,12 +264,16 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                 @Override
                 public void run() {
                     Log.d(TAG, "Setting pos to " + pos);
-                    if(pos < 0 || pos >= instructions.length) {
-                        // go to title page
-                        pager.setCurrentItem(0, 0);
-                    } else {
+                    int newPos = 0; // default to title page
+                    if(pos >= 0 && pos < instructions.length) {
                         // TODO: account for x, right now we're assuming it's always 0 since there is only a single column
-                        pager.setCurrentItem(pos+1, 0); // +1 to account for the title row
+                        newPos = pos + 1;
+                    }
+                    if(pager.getCurrentItem().y != newPos) {
+                        if(myPageListener != null) {
+                            myPageListener.setDontReportNextSelection(true);
+                        }
+                        pager.setCurrentItem(newPos, 0);
                     }
                 }
             });
@@ -377,50 +344,36 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         setAppEnabled(false);
     }
 
-    private static class DataItemAdapter extends ArrayAdapter<Event> {
+    private class MyPageListener implements GridViewPager.OnPageChangeListener {
 
-        private final Context mContext;
+        private boolean dontReportNextSelection;
+        private DotsPageIndicator dotsPageIndicator;
 
-        public DataItemAdapter(Context context, int unusedResource) {
-            super(context, unusedResource);
-            mContext = context;
+        public MyPageListener(DotsPageIndicator dotsPageIndicator) {
+            this.dotsPageIndicator = dotsPageIndicator;
+        }
+
+        public void setDontReportNextSelection(boolean dontReportNextSelection) {
+            this.dontReportNextSelection = dontReportNextSelection;
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ViewHolder holder;
-            if (convertView == null) {
-                holder = new ViewHolder();
-                LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(
-                        Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater.inflate(android.R.layout.two_line_list_item, null);
-                convertView.setTag(holder);
-                holder.text1 = (TextView) convertView.findViewById(android.R.id.text1);
-                holder.text2 = (TextView) convertView.findViewById(android.R.id.text2);
-            } else {
-                holder = (ViewHolder) convertView.getTag();
+        public void onPageScrolled(int row, int column, float rowOffset, float columnOffset, int rowOffsetPixels, int columnOffsetPixels) {
+            dotsPageIndicator.onPageScrolled(row, column, rowOffset, columnOffset, rowOffsetPixels, columnOffsetPixels);
+        }
+
+        @Override
+        public void onPageSelected(int row, int column) {
+            dotsPageIndicator.onPageSelected(row, column);
+            if(!dontReportNextSelection) {
+                sendPosToMobile(row - 1);
             }
-            Event event = getItem(position);
-            holder.text1.setText(event.title);
-            holder.text2.setText(event.text);
-            return convertView;
+            dontReportNextSelection = false;
         }
 
-        private class ViewHolder {
-
-            TextView text1;
-            TextView text2;
-        }
-    }
-
-    private class Event {
-
-        String title;
-        String text;
-
-        public Event(String title, String text) {
-            this.title = title;
-            this.text = text;
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            dotsPageIndicator.onPageScrollStateChanged(state);
         }
     }
 }
