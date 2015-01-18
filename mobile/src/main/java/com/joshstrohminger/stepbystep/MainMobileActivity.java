@@ -125,22 +125,24 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Fragment fragment;
         FragmentMap map = SECTIONS[position];
         Class<? extends Fragment> type = map.getFragmentClass();
+        Class<? extends Fragment> oldType = SECTIONS[oldPosition].getFragmentClass();
         boolean allowBack = false;
 
         if(type == HomeFragment.class) {
             fragment = HomeFragment.newInstance(getTitle().toString());
+            allowBack = false;
         } else if(type == MyStepsFragment.class) {
             fragment = MyStepsFragment.newInstance(getString(map.getFragmentName()));
-            allowBack = true;
+            allowBack = oldType == HomeFragment.class;
         } else if(type == GetStepsFragment.class) {
             fragment = GetStepsFragment.newInstance(getString(map.getFragmentName()));
-            allowBack = true;
+            allowBack = oldType == HomeFragment.class || oldType == MyStepsFragment.class;
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
             allowBack = true;
         } else if(type == StepFragment.class) {
             fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsId);
-            allowBack = true;
+            allowBack = oldType == MyStepsFragment.class;
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
