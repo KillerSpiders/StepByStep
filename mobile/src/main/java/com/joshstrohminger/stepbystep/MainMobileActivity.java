@@ -102,12 +102,12 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     }
 
     protected void getSteps() {
-        mNavigationDrawerFragment.selectItem(getStepsIndex);
+        mNavigationDrawerFragment.selectItem(getStepsIndex, true);
     }
 
     protected void step(int stepsId) {
         currentStepsId = stepsId;
-        mNavigationDrawerFragment.selectItem(stepIndex);
+        mNavigationDrawerFragment.selectItem(stepIndex, true);
     }
 
     @Override

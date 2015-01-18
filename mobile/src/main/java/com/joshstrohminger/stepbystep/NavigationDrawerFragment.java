@@ -77,7 +77,7 @@ public class NavigationDrawerFragment extends Fragment {
         }
 
         // Select either the default item (0) or the last selected item.
-        selectItem(mCurrentSelectedPosition);
+        selectItem(mCurrentSelectedPosition, false);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
+                selectItem(position, true);
             }
         });
         String[] names = new String[MainMobileActivity.SECTIONS.length];
@@ -189,7 +189,8 @@ public class NavigationDrawerFragment extends Fragment {
         mDrawerLayout.setDrawerListener(mDrawerToggle);
     }
 
-    protected void selectItem(int position) {
+    protected void selectItem(int position, boolean samenessMatters) {
+        boolean same = samenessMatters && position == mCurrentSelectedPosition;
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
@@ -197,7 +198,7 @@ public class NavigationDrawerFragment extends Fragment {
         if (mDrawerLayout != null && isDrawerOpen()) {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
-        if (mCallbacks != null) {
+        if (mCallbacks != null && !same) {
             mCallbacks.onNavigationDrawerItemSelected(position);
         }
     }
