@@ -21,7 +21,7 @@ import java.util.Locale;
 
 public class StepFragment extends Fragment implements AdapterView.OnItemClickListener, View.OnClickListener {
 
-    private static final String ARG_STEPS_ID = "arg_steps_id";
+    private static final String ARG_STEPS_INDEX = "arg_steps_id";
     private static final String TAG = StepFragment.class.getSimpleName();
     private static final String UTTERANCE_ID_CLIP = "CLIP";
 
@@ -32,16 +32,16 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
     ImageButton skipButton;
     private ListView listView;
     private String[] steps;
-    private int partsId;
+    private int stepsIndex;
     private int stepsId;
 
     private String[] instructions = new String[] {};
 
-    public static StepFragment newInstance(String name, int stepsId) {
+    public static StepFragment newInstance(String name, int stepsIndex) {
         StepFragment fragment = new StepFragment();
         Bundle args = new Bundle();
         args.putString(NavigationDrawerFragment.ARG_SECTION_TITLE, name);
-        args.putInt(ARG_STEPS_ID, stepsId);
+        args.putInt(ARG_STEPS_INDEX, stepsIndex);
         fragment.setArguments(args);
         return fragment;
     }
@@ -52,9 +52,10 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
         Button button = (Button) rootView.findViewById(R.id.button);
         TextView titleTextView = (TextView) rootView.findViewById(R.id.textViewTitle);
         TextView subtitleTextView = (TextView) rootView.findViewById(R.id.textViewSubtitle);
-        partsId = getArguments().getInt(ARG_STEPS_ID);
-        if(partsId > 0) {
-            stepsId = getResources().getIntArray(partsId)[0];
+        stepsIndex = getArguments().getInt(ARG_STEPS_INDEX, -1);
+        if(stepsIndex >= 0) {
+            MainMobileActivity.DefaultHolder holder = ((MainMobileActivity)getActivity()).DEFAULTS[stepsIndex];
+            stepsId = holder.stepsId;
             steps = getResources().getStringArray(stepsId);
             if (steps.length >= 3) {
                 titleTextView.setText(steps[0]);

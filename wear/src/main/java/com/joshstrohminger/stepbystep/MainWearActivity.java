@@ -254,7 +254,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
-                    Log.d(TAG, "Setting pos to " + pos);
+                    Log.d(TAG, "Setting pos to " + pos + " from read " + fromRead);
                     int newPos = 0; // default to title page
                     if(pos == instructions.length && fromRead) {
                         // leave it as the title if getting the position from a read and not a message

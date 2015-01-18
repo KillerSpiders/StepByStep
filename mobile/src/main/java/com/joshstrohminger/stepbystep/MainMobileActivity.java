@@ -3,7 +3,6 @@ package com.joshstrohminger.stepbystep;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Fragment;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.IntentSender;
 import android.net.Uri;
@@ -34,8 +33,10 @@ import com.google.android.gms.wearable.Wearable;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainMobileActivity extends Activity implements NavigationDrawerFragment.NavigationDrawerCallbacks, DataApi.DataListener,
@@ -64,11 +65,35 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
             //,new FragmentMap(R.string.action_settings, NavigationDrawerFragment.PlaceholderFragment.class)
     };
 
+    public class DefaultHolder {
+        int stepsId;
+        Map<Integer, Integer> pics = new HashMap<>();
+        public DefaultHolder(int stepsId) {
+            this.stepsId = stepsId;
+        }
+        public DefaultHolder addPic(int index, int id) {
+            pics.put(index, id);
+            return this;
+        }
+    }
+
+    public final DefaultHolder[] DEFAULTS = new DefaultHolder[] {
+        new DefaultHolder(R.array.steps_paper_airplane)
+                .addPic(0, R.drawable.steps_paper_airplane_0)
+                .addPic(1, R.drawable.steps_paper_airplane_1)
+                .addPic(2, R.drawable.steps_paper_airplane_2)
+                .addPic(3, R.drawable.steps_paper_airplane_3)
+                .addPic(4, R.drawable.steps_paper_airplane_4)
+                .addPic(5, R.drawable.steps_paper_airplane_5),
+        new DefaultHolder(R.array.steps_stand_on_one_foot),
+        new DefaultHolder(R.array.steps_paper_cat)
+    };
+
     private int myStepsIndex;
     private int getStepsIndex;
     private int stepIndex;
     private int homeIndex;
-    private int currentStepsId;
+    private int currentStepsIndex;
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
@@ -117,8 +142,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         mNavigationDrawerFragment.selectItem(myStepsIndex, true);
     }
 
-    protected void gotoStep(int stepsId) {
-        currentStepsId = stepsId;
+    protected void gotoStep(int index) {
+        currentStepsIndex = index;
         mNavigationDrawerFragment.selectItem(stepIndex, true);
     }
 
@@ -142,7 +167,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
         } else if(type == StepFragment.class) {
-            fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsId);
+            fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsIndex);
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;

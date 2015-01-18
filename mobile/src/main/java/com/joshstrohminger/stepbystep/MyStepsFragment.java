@@ -21,12 +21,6 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
 
     private List<StepsHolder> data;
 
-    private final int[] defaultIds = new int[]{
-            R.array.default_paper_airplane,
-            R.array.default_stand_on_one_foot,
-            R.array.default_paper_cat
-    };
-
     public MyStepsFragment() {
     }
 
@@ -39,12 +33,12 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
     }
 
     private static class StepsHolder {
-        public int id;
+        public int index;
         public String title;
         public String author;
 
-        private StepsHolder(int id, String title, String author) {
-            this.id = id;
+        private StepsHolder(int index, String title, String author) {
+            this.index = index;
             this.title = title;
             this.author = author;
         }
@@ -60,13 +54,13 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
         data = new ArrayList<>();
 
         // use default instructions
-        int[] parts;
         String[] steps;
-        for( int id : defaultIds) {
-            parts = getResources().getIntArray(id);
-            steps = getResources().getStringArray(parts[0]);
+        MainMobileActivity.DefaultHolder[] defs = ((MainMobileActivity)getActivity()).DEFAULTS;
+        for(int i = 0; i < defs.length; i++) {
+            MainMobileActivity.DefaultHolder holder = defs[i];
+            steps = getResources().getStringArray(holder.stepsId);
             if( steps.length >= 3) {
-                data.add(new StepsHolder(id, steps[0], steps[1]));
+                data.add(new StepsHolder(i, steps[0], steps[1]));
             }
         }
 
@@ -102,6 +96,6 @@ public class MyStepsFragment extends Fragment implements AdapterView.OnItemClick
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        ((MainMobileActivity)getActivity()).gotoStep(data.get(position).id);
+        ((MainMobileActivity)getActivity()).gotoStep(data.get(position).index);
     }
 }
