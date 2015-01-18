@@ -67,6 +67,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
     private int myStepsIndex;
     private int getStepsIndex;
     private int stepIndex;
+    private int homeIndex;
     private int currentStepsId;
 
     /**
@@ -102,6 +103,8 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                 stepIndex = i;
             } else if(SECTIONS[i].getFragmentClass() == MyStepsFragment.class) {
                 myStepsIndex = i;
+            } else if(SECTIONS[i].getFragmentClass() == HomeFragment.class) {
+                homeIndex = i;
             }
         }
     }
@@ -119,75 +122,47 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         mNavigationDrawerFragment.selectItem(stepIndex, true);
     }
 
+    protected void gotoHome() {
+        mNavigationDrawerFragment.selectItem(homeIndex, true);
+    }
+
     @Override
-    public void onNavigationDrawerItemSelected(int oldPosition, int position) {
+    public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         Fragment fragment;
         FragmentMap map = SECTIONS[position];
         Class<? extends Fragment> type = map.getFragmentClass();
-        Class<? extends Fragment> oldType = SECTIONS[oldPosition].getFragmentClass();
-        boolean allowBack = false;
 
         if(type == HomeFragment.class) {
             fragment = HomeFragment.newInstance(getTitle().toString());
-            allowBack = false;
         } else if(type == MyStepsFragment.class) {
             fragment = MyStepsFragment.newInstance(getString(map.getFragmentName()));
-            allowBack = oldType == HomeFragment.class;
         } else if(type == GetStepsFragment.class) {
             fragment = GetStepsFragment.newInstance(getString(map.getFragmentName()));
-            allowBack = oldType == HomeFragment.class || oldType == MyStepsFragment.class;
         } else if(type == NavigationDrawerFragment.PlaceholderFragment.class) {
             fragment = NavigationDrawerFragment.PlaceholderFragment.newInstance(getString(map.getFragmentName()));
-            allowBack = true;
         } else if(type == StepFragment.class) {
             fragment = StepFragment.newInstance(getString(map.getFragmentName()), currentStepsId);
-            allowBack = oldType == MyStepsFragment.class;
         } else {
             Log.e(TAG, "didn't find fragment class type");
             return;
         }
-        FragmentManager manager = getFragmentManager();
 
-        FragmentTransaction transaction = manager
+        getFragmentManager()
                 .beginTransaction()
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-                .replace(R.id.container, fragment, fragment.getClass().getSimpleName());
-
-        if(allowBack) {
-            transaction.addToBackStack(String.valueOf(oldPosition));
-        } else {
-            // clear the back stack
-            manager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-        }
-
-        transaction.commit();
+                .replace(R.id.container, fragment, fragment.getClass().getSimpleName())
+                .commit();
     }
 
     @Override
     public void onBackPressed() {
-        FragmentManager manager = getFragmentManager();
-        String name = null;
-        if(manager.getBackStackEntryCount() > 0) {
-            name = manager.getBackStackEntryAt(manager.getBackStackEntryCount()-1).getName();
+        // go back to home unless at home, then just exit
+        if(mNavigationDrawerFragment.getCurrentPosition() == 0) {
+            super.onBackPressed();
+        } else {
+            mNavigationDrawerFragment.selectItem(0, true);
         }
-        if(name == null) {
-            name = "0";
-        }
-        try {
-            int position = Integer.parseInt(name);
-            Log.d(TAG, "backstack to pos " + position);
-            mNavigationDrawerFragment.setCurrentItemFromBackstack(position);
-            if(position == 0) {
-                mTitle = getTitle();
-            } else {
-                mTitle = getString(SECTIONS[position].getFragmentName());
-            }
-            restoreActionBar();
-        } catch (NumberFormatException e) {
-            Log.e(TAG, "invalid fragment backstack name: " + name);
-        }
-        super.onBackPressed();
     }
 
     public void onSectionAttached(String title) {
@@ -273,7 +248,6 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
         Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
         Wearable.NodeApi.addListener(mGoogleApiClient, this);
-        //deleteAllDataItems();
     }
 
     @Override //ConnectionCallbacks
@@ -390,7 +364,7 @@ public class MainMobileActivity extends Activity implements NavigationDrawerFrag
                 .setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
                     @Override
                     public void onResult(DataApi.DataItemResult dataItemResult) {
-                        if(dataItemResult.getStatus().isSuccess()) {
+                        if (dataItemResult.getStatus().isSuccess()) {
                             Log.d(TAG, "sent " + name);
                         } else {
                             Log.e(TAG, "failed to send " + name);

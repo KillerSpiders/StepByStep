@@ -206,9 +206,19 @@ public class NavigationDrawerFragment extends Fragment {
         }
     }
 
+    protected int getCurrentPosition() {
+        int pos = 0;
+        if(mDrawerListView != null) {
+            pos = mDrawerListView.getCheckedItemPosition();
+            if (pos == AdapterView.INVALID_POSITION) {
+                pos = 0;
+            }
+        }
+        return pos;
+    }
+
     protected void selectItem(int position, boolean samenessMatters) {
-        int oldPosition = mCurrentSelectedPosition;
-        boolean same = samenessMatters && position == oldPosition;
+        boolean same = samenessMatters && position == mCurrentSelectedPosition;
         mCurrentSelectedPosition = position;
         if (mDrawerListView != null) {
             mDrawerListView.setItemChecked(position, true);
@@ -217,7 +227,7 @@ public class NavigationDrawerFragment extends Fragment {
             mDrawerLayout.closeDrawer(mFragmentContainerView);
         }
         if (mCallbacks != null && !same) {
-            mCallbacks.onNavigationDrawerItemSelected(oldPosition, position);
+            mCallbacks.onNavigationDrawerItemSelected(position);
         }
     }
 
@@ -291,7 +301,7 @@ public class NavigationDrawerFragment extends Fragment {
         /**
          * Called when an new item in the navigation drawer is selected.
          */
-        void onNavigationDrawerItemSelected(int oldPosition, int position);
+        void onNavigationDrawerItemSelected(int position);
     }
 
 
