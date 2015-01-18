@@ -189,13 +189,16 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
             if(pos < 0 || pos >= instructions.length) {
                 if(pos == instructions.length) {
                     play("That was the last step");
+                    statusTextView.setText("Done");
+                } else {
+                    statusTextView.setText("Ready");
                 }
+
                 // uncheck
                 pos = listView.getCheckedItemPosition();
                 if (pos != AdapterView.INVALID_POSITION) {
                     listView.setItemChecked(pos, false);
                 }
-                statusTextView.setText("Done/Ready");
             } else {
                 listView.setItemChecked(pos, true);
                 listView.smoothScrollToPosition(pos);
@@ -232,7 +235,11 @@ public class StepFragment extends Fragment implements AdapterView.OnItemClickLis
             ++pos;
         }
         updatePos(pos);
-        ((MainMobileActivity)getActivity()).sendStepPositionToWearable(listView.getCheckedItemPosition());
+        if(pos == instructions.length) {
+            ((MainMobileActivity) getActivity()).sendStepPositionToWearable(pos);
+        } else {
+            ((MainMobileActivity) getActivity()).sendStepPositionToWearable(listView.getCheckedItemPosition());
+        }
     }
 
     @Override

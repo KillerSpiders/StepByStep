@@ -6,10 +6,8 @@
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="-30dp"
-        android:scaleType="fitStart"
+        android:layout_margin="10dp"
+        android:scaleType="fitCenter"
         android:id="@+id/imageView"
         android:src="@drawable/web_hi_res_512_logo_simple_cropped"
         android:layout_toStartOf="@+id/textViewTitle"
@@ -25,30 +23,16 @@
         android:text="@string/app_name"
         android:id="@+id/textViewTitle"
         android:textStyle="bold"
-        android:shadowColor="@color/light_glow"
-        android:shadowDx="0"
-        android:shadowDy="0"
-        android:shadowRadius="20"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="20dp"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Send Note 1"
-        android:id="@+id/buttonSendNotification"
-        android:layout_below="@id/textViewTitle"
-        android:layout_alignEnd="@id/textViewTitle"
-        android:layout_marginTop="50dp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Created for the CDS San Diego Hackathon 2015"
         android:id="@+id/textViewAbout"
-        android:textColor="@android:color/secondary_text_dark"
         android:singleLine="false"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
@@ -59,11 +43,11 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Creators:\n\nKiller Spiders\n\nOur name is random...\n\nour code is not..."
         android:singleLine="false"
-        android:gravity="center_vertical"
+        android:gravity="center"
         android:id="@+id/textViewAuthor"
-        android:layout_marginStart="30dp"
         android:layout_toEndOf="@id/imageView"
-        android:layout_below="@id/buttonSendNotification"
-        android:layout_alignEnd="@id/buttonSendNotification"
+        android:layout_below="@id/textViewTitle"
+        android:layout_alignStart="@id/textViewTitle"
+        android:layout_alignEnd="@id/textViewTitle"
         android:layout_above="@id/textViewAbout" />
 </RelativeLayout>

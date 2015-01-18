@@ -208,7 +208,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
             public void onResult(DataApi.DataItemResult dataItemResult) {
                 DataItem dataItem = dataItemResult.getDataItem();
                 if(dataItem != null) {
-                    populateStepPosition(DataMapItem.fromDataItem(dataItem));
+                    populateStepPosition(DataMapItem.fromDataItem(dataItem), true);
                 }
             }
         });
@@ -236,19 +236,21 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
         }
     }
 
-    private void populateStepPosition(DataMapItem dataMapItem) {
+    private void populateStepPosition(DataMapItem dataMapItem, boolean fromRead) {
         final int pos = dataMapItem.getDataMap().getInt(DataLayerListenerService.POS_KEY);
-        populateStepPosition(pos);
+        populateStepPosition(pos, fromRead);
     }
 
-    private void populateStepPosition(final int pos) {
+    private void populateStepPosition(final int pos, final boolean fromRead) {
         if(instructions != null) {
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     Log.d(TAG, "Setting pos to " + pos);
                     int newPos = 0; // default to title page
-                    if(pos >= 0 && pos <= instructions.length) {
+                    if(pos == instructions.length && fromRead) {
+                        // leave it as the title if getting the position from a read and not a message
+                    } else if(pos >= 0 && pos <= instructions.length) {
                         // TODO: account for x, right now we're assuming it's always 0 since there is only a single column
                         newPos = pos + 1;
                     }
@@ -278,7 +280,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                         populateSteps(DataMapItem.fromDataItem(dataItem));
                         break;
                     case DataLayerListenerService.POS_PATH:
-                        populateStepPosition(DataMapItem.fromDataItem(dataItem));
+                        populateStepPosition(DataMapItem.fromDataItem(dataItem), false);
                         break;
                     default:
                         Log.e(TAG, "Unrecognized path: " + path);
@@ -292,7 +294,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
                         setAppEnabled(false);
                         break;
                     case DataLayerListenerService.POS_PATH:
-                        populateStepPosition(AdapterView.INVALID_POSITION);
+                        populateStepPosition(AdapterView.INVALID_POSITION, false);
                         break;
                     default:
                         Log.w(TAG, "Unhandled deleted path");
@@ -325,6 +327,13 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
     public void onPeerDisconnected(Node node) {
         Log.d(TAG, "Node Disconnected: " + node.getId());
         setAppEnabled(false);
+    }
+
+    public void showConfirmation() {
+        Intent intent = new Intent(this, ConfirmationActivity.class);
+        intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.SUCCESS_ANIMATION);
+        //intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "Done");
+        startActivity(intent);
     }
 
     private class MyPageListener implements GridViewPager.OnPageChangeListener {
@@ -360,10 +369,7 @@ public class MainWearActivity extends Activity implements GoogleApiClient.Connec
             }
 
             if(row == adapter.getRowCount() - 1) {
-                Intent intent = new Intent(MainWearActivity.this, ConfirmationActivity.class);
-                intent.putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.SUCCESS_ANIMATION);
-                //intent.putExtra(ConfirmationActivity.EXTRA_MESSAGE, "Done");
-                startActivity(intent);
+                showConfirmation();
             }
         }
 

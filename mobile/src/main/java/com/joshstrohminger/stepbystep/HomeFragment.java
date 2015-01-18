@@ -15,9 +15,6 @@ import android.widget.Button;
 
 public class HomeFragment extends Fragment {
 
-    Button buttonSendNotification;
-    int count;
-
     public HomeFragment() {
         // Required empty public constructor
     }
@@ -35,31 +32,21 @@ public class HomeFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View root = inflater.inflate(R.layout.fragment_home, container, false);
-        buttonSendNotification = (Button) root.findViewById(R.id.buttonSendNotification);
-        count = 1;
-        buttonSendNotification.setText("Send Note " + count);
-        buttonSendNotification.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                //NotificationCompat.Action action = new NotificationCompat.Action.Builder(android.R.drawable.ic_media_play, "Play", null).build();
-
-                Notification note = new NotificationCompat.Builder(getActivity())
-                        .setSmallIcon(R.drawable.ic_launcher)
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setContentTitle("Step By Step")
-                        .setContentText("This is a longer note " + count)
-                        .extend(new NotificationCompat.WearableExtender()
-                                        //.addAction(action)
-                                        .setContentIcon(R.drawable.logo_simple)
-                                                //.setContentAction(0)
-                                        .setHintHideIcon(true)
-                                        .setContentIconGravity(count % 2 == 0 ? Gravity.START : Gravity.NO_GRAVITY)
-                        ).build();
-                NotificationManagerCompat.from(getActivity()).notify(count, note);
-                buttonSendNotification.setText("Send Note " + ++count);
-            }
-        });
+//                //NotificationCompat.Action action = new NotificationCompat.Action.Builder(android.R.drawable.ic_media_play, "Play", null).build();
+//
+//                Notification note = new NotificationCompat.Builder(getActivity())
+//                        .setSmallIcon(R.drawable.ic_launcher)
+//                        .setPriority(NotificationCompat.PRIORITY_MAX)
+//                        .setContentTitle("Step By Step")
+//                        .setContentText("This is a longer note " + count)
+//                        .extend(new NotificationCompat.WearableExtender()
+//                                        //.addAction(action)
+//                                        .setContentIcon(R.drawable.logo_simple)
+//                                                //.setContentAction(0)
+//                                        .setHintHideIcon(true)
+//                                        .setContentIconGravity(count % 2 == 0 ? Gravity.START : Gravity.NO_GRAVITY)
+//                        ).build();
+//                NotificationManagerCompat.from(getActivity()).notify(count, note);
         return root;
     }
 
@@ -67,5 +54,6 @@ public class HomeFragment extends Fragment {
     public void onAttach(Activity activity) {
         super.onAttach(activity);
         ((MainMobileActivity) activity).onSectionAttached(getArguments().getString(NavigationDrawerFragment.ARG_SECTION_TITLE));
+        ((MainMobileActivity) activity).deleteAllDataItems();
     }
 }

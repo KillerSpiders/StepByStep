@@ -46,7 +46,7 @@ public class SampleGridPagerAdapter extends FragmentGridPagerAdapter {
 
         mRows.add(new Row(cardFragment(ctx.getString(R.string.app_name), title)));
         for( int i = 0; i < instructions.length; ++i) {
-            mRows.add(new Row(cardFragment((i+1) + " of " + instructions.length, instructions[i], R.drawable.ic_action_play)));
+            mRows.add(new Row(cardFragment((i+1) + " of " + instructions.length, instructions[i], R.drawable.logo_simple)));
         }
         mRows.add(new Row(cardFragment("Done", title)));
 
