@@ -1,5 +1,5 @@
 # StepByStep
-[Demo Slides](demo/slides.pptx)
+[Demo Slides](demo/slides.pptx?raw=true)
 ### Phone App
 ![Phone App](demo/screens/home.png)
 ### Wear App
